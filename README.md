@@ -67,12 +67,12 @@ test/hk/edu/polyu/comp/comp2021/crobs/model/
 
 | 模块 | 内容 | 需求 |
 |---|---|---|
-| **A** 基础设施 | `Application`、`Dispatcher`、`CommandParser`、`Session`、`io/`；日志、登录登出、权限、quit | REQ1, 4, 5, 6, 18 |
+| **A** 基础设施 | `Application`、`Dispatcher`、`CommandParser`、`Session`、`io/`；日志、登录登出、权限、quit — **ChrispearQues** | REQ1, 4, 5, 6, 18 |
 | **B** 用户与房间 | `model/User`、`Room`、`RoomType`、`IdGenerator`；增删改查 | REQ2, 3, 7, 8, 9, 15, 16 |
 | **C** 预约与冲突 | `model/Booking`、`TimeSlot`；创建/修改/删除/列出预约与冲突检测 | REQ10, 11, 12, 17 |
 | **D** 查询与视图 | 搜索、周课表、输出格式 | REQ13, 14 |
 
-认领后在 Issues 里把自己指派上，并在本表对应行写上名字。
+认领后在 Issues 里把自己指派上，并在本表对应行写上名字。A 已由 **ChrispearQues** 认领。
 
 ## 6. 工作流程（每个人都照这个做）
 
