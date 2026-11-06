@@ -109,7 +109,7 @@ view  ←  controller  ←  Application
 
 | 成员 | 包 | REQ |
 |---|---|---|
-| A | `Application`、`controller`、`io` | REQ1, 4, 5, 6, 18 |
-| B | `model`: User/Room/IdGenerator | REQ2, 3, 7, 8, 9, 15, 16 |
-| C | `model`: Booking/TimeSlot + 预约核心命令 | REQ10, 11, 12 |
-| D | `model`: 查询 + `ConsoleView` 输出格式 + 用户手册 | REQ13, 14, 17 |
+| A · ChrispearQues | `Application`、`controller`、`io` | REQ1, 4, 5, 6, 18 |
+| B · LeoLiuZY | `model`: User/Room/IdGenerator | REQ2, 3, 7, 8, 9, 15, 16 |
+| C · brianisbadass | `model`: Booking/TimeSlot + 预约核心命令 | REQ10, 11, 12 |
+| D · nocketenyin | `model`: 查询 + `ConsoleView` 输出格式 + 用户手册 | REQ13, 14, 17 |
