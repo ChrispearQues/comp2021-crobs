@@ -111,5 +111,5 @@ view  ←  controller  ←  Application
 |---|---|---|
 | A | `Application`、`controller`、`io` | REQ1, 4, 5, 6, 18 |
 | B | `model`: User/Room/IdGenerator | REQ2, 3, 7, 8, 9, 15, 16 |
-| C | `model`: Booking/TimeSlot + 预约相关命令 | REQ10, 11, 12, 17 |
-| D | `model`: 查询 + `ConsoleView` 输出格式 | REQ13, 14 |
+| C | `model`: Booking/TimeSlot + 预约核心命令 | REQ10, 11, 12 |
+| D | `model`: 查询 + `ConsoleView` 输出格式 + 用户手册 | REQ13, 14, 17 |
