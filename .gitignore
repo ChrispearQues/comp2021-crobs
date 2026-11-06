@@ -1,0 +1,13 @@
+# IntelliJ
+.idea/
+*.iml
+!crobs.iml
+out/
+
+# Build output
+bin/
+target/
+*.class
+
+# OS
+.DS_Store
