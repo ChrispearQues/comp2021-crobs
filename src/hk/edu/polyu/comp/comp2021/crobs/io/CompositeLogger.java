@@ -17,4 +17,11 @@ public class CompositeLogger implements OperationLogger {
             logger.log(index, command);
         }
     }
+
+    @Override
+    public void close() {
+        for (OperationLogger logger : loggers) {
+            logger.close();
+        }
+    }
 }

@@ -16,7 +16,6 @@ public class ListRoomCommand implements Command {
 
     @Override
     public String execute() {
-        // TODO(REQ15)
-        throw new UnsupportedOperationException("TODO: ListRoomCommand.execute");
+        return crobs.listRoom(roomId);
     }
 }

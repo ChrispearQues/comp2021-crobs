@@ -13,8 +13,8 @@ src/hk/edu/polyu/comp/comp2021/crobs/
 ├── controller/
 │   ├── CommandParser.java            String → Command；只做切分与格式校验
 │   ├── Command.java                  接口：execute() / undo() / isUndoable()
-│   ├── Dispatcher.java               统一入口：权限 → execute → 日志（REQ1）
-│   ├── Session.java                  当前登录用户（null = 未登录）
+│   ├── Dispatcher.java               统一入口：记日志 → parse → execute → 打印（REQ1）
+│   ├── Session.java                  登录状态的薄委托（真正的 currentUser 在 CROBS 里）
 │   └── command/                      每条命令一个类
 │       ├── LoginCommand.java          REQ5
 │       ├── LogoutCommand.java         REQ6
@@ -81,31 +81,59 @@ view  ←  controller  ←  Application
 
 | 方法 | 对应 REQ | 抛出的异常 |
 |---|---|---|
-| `login(String userId)` | REQ5 | NotFound |
+| `login(String userId)` | REQ5 | NotFound, Malformed (already logged in) |
 | `logout()` | REQ6 | — |
 | `addUser(String name)` | REQ2 | PermissionDenied |
 | `removeUser(String userId)` | REQ3 | PermissionDenied, NotFound |
 | `changeRole(String userId, String role)` | REQ4 | PermissionDenied, NotFound, Malformed |
-| `addRoom(String type, int capacity, String features)` | REQ7 | PermissionDenied, Malformed |
+| `addRoom(String roomType, String capacity, String features)` | REQ7 | PermissionDenied, Malformed |
 | `modifyRoom(String roomId, String field, String value)` | REQ8 | PermissionDenied, NotFound, Malformed |
 | `deleteRoom(String roomId)` | REQ9 | PermissionDenied, NotFound |
 | `book(String roomId, String date, String start, String end, String purpose)` | REQ10 | Conflict, NotFound, Malformed |
 | `modifyBooking(String bookingId, ...)` | REQ11 | PermissionDenied, Conflict, NotFound |
 | `deleteBooking(String bookingId)` | REQ12 | PermissionDenied, NotFound |
-| `search(String date, String start, String end, int minCapacity, String features)` | REQ13 | Malformed |
+| `search(String date, String start, String end, String minCapacity, String features)` | REQ13 | Malformed |
 | `schedule(String roomId, String weekStartDate)` | REQ14 | NotFound, Malformed |
 | `listRoom(String roomId)` / `listAllRooms()` | REQ15 / REQ16 | NotFound |
 | `listBookings()` | REQ17 | — |
+| `getCurrentUser()` | 装配用 | — |
 
 返回值统一是**可直接打印的字符串**（或字符串列表），格式化留在 model，保证 CLI 与未来的 GUI 输出一致。
 
-## 4. 三条铁律
+> **参数一律传原始字符串**。`CommandParser` 只做「切分 + 参数个数校验」，不做类型转换：
+> `addRoom` 的 capacity 和 `search` 的 minCapacity 都是 `String`，由 model 负责解析成 `int`
+> 并抛出 `MalformedCommandException`。理由：把「用户输入是否合法」这件事留在 model 里，
+> 才能被 `model` 包的单元测试覆盖到（覆盖率只算这个包），也才不会出现
+> 「parser 报一种错、model 报另一种错」的双重校验。
+
+## 4. 装配与状态归属
+
+谁 new 谁、谁存什么，说清楚才不会出现「两份登录状态」。
+
+```
+Application
+  ├─ new CROBS()                    ← 唯一持有业务数据 + currentUser
+  ├─ new Session(crobs)             ← 只转调 crobs.getCurrentUser()，不存用户对象
+  ├─ new CommandParser(crobs)       ← 只依赖门面，构造 Command 对象
+  ├─ new TxtLogger / HtmlLogger → CompositeLogger
+  ├─ new ConsoleView()
+  └─ new Dispatcher(parser, logger, view)
+```
+
+- **`CROBS.currentUser` 是登录状态的单一真相源**。`getCurrentUser()` 返回 `null` 表示未登录。
+- **`Session` 只做薄委托**：`isLoggedIn()` → `crobs.getCurrentUser() != null`。
+  它**不缓存** `User`，否则 `logout()` 之后就会出现「Session 说还登录着、CROBS 说没有」的双真相源。
+- `User` 是可变对象（`setRole`）。因为 `currentUser` 指向的就是 `users` 表里的同一个实例，
+  `changeRole` 不需要「同步更新两处」，改一处就等于改全部。
+- `Dispatcher` 不知道也不问「谁登录了」：权限判断在 `model/Permission`，controller 只搬字符串。
+
+## 5. 三条铁律
 
 1. **业务判断一律在 model**。`controller` 里出现 `if (user.getRole() == ADMIN)` 就是错的位置——权限判定放 `Permission` / `CROBS`，否则测不到、coverage 掉分。
 2. **命令一律走 `Dispatcher`**，日志（REQ1）只在这一处写，不要每条命令自己写。
 3. **异常不吞**：model 抛 `CrobsException` 子类，`Dispatcher` 统一捕获并转成用户可读信息。返回 `String` 表示错误会破坏可测性。
 
-## 5. 分工映射
+## 6. 分工映射
 
 | 成员 | 包 | REQ |
 |---|---|---|

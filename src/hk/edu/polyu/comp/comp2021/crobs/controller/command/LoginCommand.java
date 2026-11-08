@@ -16,7 +16,8 @@ public class LoginCommand implements Command {
 
     @Override
     public String execute() {
-        // TODO(REQ5)
-        throw new UnsupportedOperationException("TODO: LoginCommand.execute");
+        crobs.login(userId);
+        // Echo the canonical ID (the user may have typed lower case).
+        return "Logged in as " + crobs.getCurrentUser().getId();
     }
 }

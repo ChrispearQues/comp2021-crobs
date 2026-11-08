@@ -18,7 +18,10 @@ public class ScheduleCommand implements Command {
 
     @Override
     public String execute() {
-        // TODO(REQ14)
-        throw new UnsupportedOperationException("TODO: ScheduleCommand.execute");
+        return join(crobs.schedule(roomId, weekStartDate));
+    }
+
+    private static String join(java.util.List<String> lines) {
+        return lines.isEmpty() ? "(no bookings this week)" : String.join("\n", lines);
     }
 }

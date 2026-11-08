@@ -5,18 +5,28 @@ public final class Permission {
 
     private Permission() { }
 
+    /** Every command except login and quit needs somebody to be logged in. */
     public static void requireLogin(User user) {
-        // TODO: throw PermissionDeniedException when user == null
-        throw new UnsupportedOperationException("TODO: Permission.requireLogin");
+        if (user == null) {
+            throw new CrobsException.PermissionDeniedException("You must log in first");
+        }
     }
 
+    /** Admin actions may be run by an admin or by the superadmin. */
     public static void requireAdmin(User user) {
-        // TODO: requireLogin, then SUPERADMIN or ADMIN
-        throw new UnsupportedOperationException("TODO: Permission.requireAdmin");
+        requireLogin(user);
+        if (user.getRole() == Role.REGULAR) {
+            throw new CrobsException.PermissionDeniedException(
+                    "This operation requires admin rights; " + user.getId() + " is a regular user");
+        }
     }
 
+    /** Only the single superadmin may do this (REQ4). */
     public static void requireSuperAdmin(User user) {
-        // TODO: requireLogin, then SUPERADMIN only
-        throw new UnsupportedOperationException("TODO: Permission.requireSuperAdmin");
+        requireLogin(user);
+        if (user.getRole() != Role.SUPERADMIN) {
+            throw new CrobsException.PermissionDeniedException(
+                    "This operation requires the superadmin; " + user.getId() + " is not the superadmin");
+        }
     }
 }

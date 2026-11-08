@@ -8,15 +8,13 @@ public class LogoutCommand implements Command {
 
     private final CROBS crobs;
 
-
     public LogoutCommand(CROBS crobs) {
         this.crobs = crobs;
-
     }
 
     @Override
     public String execute() {
-        // TODO(REQ6)
-        throw new UnsupportedOperationException("TODO: LogoutCommand.execute");
+        crobs.logout();
+        return "Logged out";
     }
 }

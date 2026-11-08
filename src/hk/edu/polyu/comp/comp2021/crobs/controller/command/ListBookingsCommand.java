@@ -8,15 +8,16 @@ public class ListBookingsCommand implements Command {
 
     private final CROBS crobs;
 
-
     public ListBookingsCommand(CROBS crobs) {
         this.crobs = crobs;
-
     }
 
     @Override
     public String execute() {
-        // TODO(REQ17)
-        throw new UnsupportedOperationException("TODO: ListBookingsCommand.execute");
+        return join(crobs.listBookings());
+    }
+
+    private static String join(java.util.List<String> lines) {
+        return lines.isEmpty() ? "(no bookings)" : String.join("\n", lines);
     }
 }

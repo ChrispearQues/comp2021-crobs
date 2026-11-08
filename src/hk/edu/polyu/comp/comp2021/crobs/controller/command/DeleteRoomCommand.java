@@ -16,7 +16,7 @@ public class DeleteRoomCommand implements Command {
 
     @Override
     public String execute() {
-        // TODO(REQ9)
-        throw new UnsupportedOperationException("TODO: DeleteRoomCommand.execute");
+        crobs.deleteRoom(roomId);
+        return "Room " + roomId + " deleted";
     }
 }

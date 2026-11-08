@@ -8,15 +8,16 @@ public class ListAllRoomsCommand implements Command {
 
     private final CROBS crobs;
 
-
     public ListAllRoomsCommand(CROBS crobs) {
         this.crobs = crobs;
-
     }
 
     @Override
     public String execute() {
-        // TODO(REQ16)
-        throw new UnsupportedOperationException("TODO: ListAllRoomsCommand.execute");
+        return join(crobs.listAllRooms());
+    }
+
+    private static String join(java.util.List<String> lines) {
+        return lines.isEmpty() ? "(no rooms)" : String.join("\n", lines);
     }
 }
