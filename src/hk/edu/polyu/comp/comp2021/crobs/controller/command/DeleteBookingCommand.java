@@ -16,7 +16,7 @@ public class DeleteBookingCommand implements Command {
 
     @Override
     public String execute() {
-        // TODO(REQ12)
-        throw new UnsupportedOperationException("TODO: DeleteBookingCommand.execute");
+        crobs.deleteBooking(bookingId);
+        return "Booking " + bookingId + " deleted";
     }
 }

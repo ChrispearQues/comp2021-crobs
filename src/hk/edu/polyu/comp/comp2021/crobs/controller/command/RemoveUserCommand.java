@@ -16,7 +16,7 @@ public class RemoveUserCommand implements Command {
 
     @Override
     public String execute() {
-        // TODO(REQ3)
-        throw new UnsupportedOperationException("TODO: RemoveUserCommand.execute");
+        crobs.removeUser(userId);
+        return "User " + userId + " removed";
     }
 }

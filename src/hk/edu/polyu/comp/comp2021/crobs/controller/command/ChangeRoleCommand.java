@@ -18,7 +18,7 @@ public class ChangeRoleCommand implements Command {
 
     @Override
     public String execute() {
-        // TODO(REQ4)
-        throw new UnsupportedOperationException("TODO: ChangeRoleCommand.execute");
+        crobs.changeRole(userId, newRole);
+        return "Role of " + userId + " changed to " + newRole;
     }
 }
