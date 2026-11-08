@@ -85,14 +85,14 @@ view  ←  controller  ←  Application
 | `logout()` | REQ6 | — |
 | `addUser(String name)` | REQ2 | PermissionDenied |
 | `removeUser(String userId)` | REQ3 | PermissionDenied, NotFound |
-| `changeRole(String userId, String role)` | REQ4 | PermissionDenied, NotFound, Malformed |
+| `changeRole(String userId, String newRole)` | REQ4 | PermissionDenied, NotFound, Malformed |
 | `addRoom(String roomType, String capacity, String features)` | REQ7 | PermissionDenied, Malformed |
-| `modifyRoom(String roomId, String field, String value)` | REQ8 | PermissionDenied, NotFound, Malformed |
+| `modifyRoom(String roomId, String field, String newValue)` | REQ8 | PermissionDenied, NotFound, Malformed |
 | `deleteRoom(String roomId)` | REQ9 | PermissionDenied, NotFound |
-| `book(String roomId, String date, String start, String end, String purpose)` | REQ10 | Conflict, NotFound, Malformed |
+| `book(String roomId, String date, String startTime, String endTime, String purpose)` | REQ10 | Conflict, NotFound, Malformed |
 | `modifyBooking(String bookingId, ...)` | REQ11 | PermissionDenied, Conflict, NotFound |
 | `deleteBooking(String bookingId)` | REQ12 | PermissionDenied, NotFound |
-| `search(String date, String start, String end, String minCapacity, String features)` | REQ13 | Malformed |
+| `search(String date, String startTime, String endTime, String minCapacity, String features)` | REQ13 | Malformed |
 | `schedule(String roomId, String weekStartDate)` | REQ14 | NotFound, Malformed |
 | `listRoom(String roomId)` / `listAllRooms()` | REQ15 / REQ16 | NotFound |
 | `listBookings()` | REQ17 | — |
