@@ -15,7 +15,15 @@ public enum RoomType {
 
     /** @throws CrobsException if the label is not a supported room type. */
     public static RoomType fromLabel(String label) {
-        // TODO(REQ7): map label back to the enum constant
-        throw new UnsupportedOperationException("TODO: RoomType.fromLabel");
+        if (label == null || label.trim().isEmpty()) {
+            throw new CrobsException.MalformedCommandException("Room type cannot be empty.");
+        }
+        String trimmed = label.trim();
+        for (RoomType type : values()) {
+            if (type.label.equals(trimmed)) {
+                return type;
+            }
+        }
+        throw new CrobsException.MalformedCommandException("Unsupported room type: " + label);
     }
 }

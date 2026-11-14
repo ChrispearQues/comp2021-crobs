@@ -20,7 +20,7 @@ public class AddRoomCommand implements Command {
 
     @Override
     public String execute() {
-        // TODO(REQ7)
-        throw new UnsupportedOperationException("TODO: AddRoomCommand.execute");
+        String roomId = crobs.addRoom(roomType, capacity, features);
+        return "Added room " + roomId;
     }
 }

@@ -16,7 +16,7 @@ public class AddUserCommand implements Command {
 
     @Override
     public String execute() {
-        // TODO(REQ2)
-        throw new UnsupportedOperationException("TODO: AddUserCommand.execute");
+        String userId = crobs.addUser(name);
+        return "Added user " + userId;
     }
 }
