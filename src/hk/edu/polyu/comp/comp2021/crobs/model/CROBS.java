@@ -58,14 +58,36 @@ public class CROBS {
         currentUser = null;
     }
 
-    /** REQ2 */
+    /**
+     * REQ2 -- module B's {@link User} does the validation, this only mints the ID.
+     *
+     * @param name the full name of the new user
+     * @return the generated user ID
+     */
     public String addUser(String name) {
-        throw new UnsupportedOperationException("TODO: addUser");
+        Permission.requireAdmin(currentUser);
+        // Validate before minting an ID so that a rejected command does not burn one.
+        if (name == null || name.trim().isEmpty()) {
+            throw new CrobsException.MalformedCommandException("User name cannot be empty.");
+        }
+        String id = userIds.next();
+        users.put(id, new User(id, name, Role.REGULAR));
+        return id;
     }
 
     /** REQ3 -- also cancels this user's bookings. */
     public void removeUser(String userId) {
-        throw new UnsupportedOperationException("TODO: removeUser");
+        Permission.requireAdmin(currentUser);
+        User target = findUser(userId);
+        if (target.getRole() != Role.REGULAR) {
+            throw new CrobsException.PermissionDeniedException(
+                    "Only a regular user can be removed; " + target.getId() + " is " + target.getRole());
+        }
+        // Minimal safe handling until module C lands: drop the bookings of the user.
+        // TODO(REQ3/REQ10): module C decides whether a booking of a removed user is
+        // deleted or kept as history; revisit once Booking semantics exist.
+        bookings.values().removeIf(booking -> booking.getUserId().equals(target.getId()));
+        users.remove(target.getId());
     }
 
     /** REQ4 -- superadmin only. */
