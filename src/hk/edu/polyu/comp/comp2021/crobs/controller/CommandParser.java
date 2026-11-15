@@ -127,8 +127,9 @@ public class CommandParser {
     /**
      * Splits on whitespace, but keeps double-quoted arguments together so that a
      * booking purpose such as {@code "Group meeting"} stays one argument.
+     * Package-private so that it can be tested without faking a whole REPL.
      */
-    private static List<String> tokenize(String line) {
+    static List<String> tokenize(String line) {
         List<String> tokens = new ArrayList<>();
         StringBuilder current = new StringBuilder();
         boolean inQuotes = false;

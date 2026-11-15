@@ -23,6 +23,9 @@ import java.util.List;
 /**
  * Program entry point: reads the {@code -txt} / {@code -html} options, wires the
  * layers together and runs the REPL until {@code quit} or end of input.
+ *
+ * <p>Exit status: {@code 0} on a normal run, {@code 1} when the command line is
+ * wrong or when a log file cannot be opened, written or closed.
  */
 public class Application {
 
@@ -57,19 +60,59 @@ public class Application {
             }
         }
 
-        List<OperationLogger> loggers = new ArrayList<>();
-        if (txtLog != null) {
-            loggers.add(new TxtLogger(txtLog));
+        OperationLogger logger;
+        try {
+            logger = createLoggers(txtLog, htmlLog);
+        } catch (RuntimeException e) {
+            // No stack trace for an ordinary user error; the exit status tells scripts it failed.
+            die(e.getMessage());
+            return;
         }
-        if (htmlLog != null) {
-            loggers.add(new HtmlLogger(htmlLog));
-        }
-        OperationLogger logger = new CompositeLogger(loggers.toArray(new OperationLogger[0]));
 
+        int status = 0;
         try {
             new Application().run(logger);
+        } catch (UncheckedIOException e) {
+            System.err.println("Error: " + e.getMessage());
+            status = 1;
         } finally {
-            logger.close();
+            try {
+                logger.close();
+            } catch (RuntimeException e) {
+                System.err.println("Error: " + e.getMessage());
+                status = 1;
+            }
+        }
+        if (status != 0) {
+            System.exit(status);
+        }
+    }
+
+    /** Builds the (possibly empty) composite of the log files requested on the command line. */
+    private static OperationLogger createLoggers(Path txtLog, Path htmlLog) {
+        List<OperationLogger> loggers = new ArrayList<>();
+        try {
+            if (txtLog != null) {
+                loggers.add(new TxtLogger(txtLog));
+            }
+            if (htmlLog != null) {
+                loggers.add(new HtmlLogger(htmlLog));
+            }
+        } catch (RuntimeException e) {
+            // Do not leak a half-open file when the second log cannot be created.
+            closeQuietly(loggers);
+            throw e;
+        }
+        return new CompositeLogger(loggers.toArray(new OperationLogger[0]));
+    }
+
+    private static void closeQuietly(List<OperationLogger> loggers) {
+        for (OperationLogger logger : loggers) {
+            try {
+                logger.close();
+            } catch (RuntimeException ignored) {
+                // Already unwinding: the original failure is the one worth reporting.
+            }
         }
     }
 
@@ -97,8 +140,16 @@ public class Application {
         }
     }
 
+    /** Prints a usage error and exits with status 1 so scripts can detect the failure. */
     private static void fail(String message) {
         System.err.println(message);
         System.err.println(USAGE);
+        System.exit(1);
+    }
+
+    /** Prints a runtime error (no usage text) and exits with status 1. */
+    private static void die(String message) {
+        System.err.println("Error: " + message);
+        System.exit(1);
     }
 }
