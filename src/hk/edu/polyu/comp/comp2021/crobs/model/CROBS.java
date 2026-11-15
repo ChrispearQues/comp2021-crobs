@@ -1,5 +1,7 @@
 package hk.edu.polyu.comp.comp2021.crobs.model;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -205,29 +207,48 @@ public class CROBS {
         throw new UnsupportedOperationException("TODO: deleteBooking");
     }
 
-    /** REQ13 */
+    /**
+     * REQ13 -- module D's {@link RoomSearch} does the filtering.
+     *
+     * <p>Compatibility note: the availability check calls
+     * {@link TimeSlot#overlaps(TimeSlot)}, still a module C stub, so a search
+     * that meets an existing booking fails with {@code UnsupportedOperationException}
+     * until REQ10 lands.</p>
+     */
     public List<String> search(String date, String startTime, String endTime,
                                String minCapacity, String features) {
-        throw new UnsupportedOperationException("TODO: search");
+        Permission.requireLogin(currentUser);
+        return new RoomSearch(rooms.values(), bookings.values())
+                .search(date, startTime, endTime, minCapacity, features);
     }
 
     /** REQ14 -- regular users only see their own user IDs. */
     public List<String> schedule(String roomId, String weekStartDate) {
-        throw new UnsupportedOperationException("TODO: schedule");
+        Permission.requireLogin(currentUser);
+        return new ScheduleView(rooms, bookings.values()).week(roomId, weekStartDate, currentUser);
     }
 
     /** REQ15 */
     public String listRoom(String roomId) {
-        throw new UnsupportedOperationException("TODO: listRoom");
+        Permission.requireLogin(currentUser);
+        return CompatViews.describe(findRoom(roomId));
     }
 
     /** REQ16 -- sorted by room ID ascending. */
     public List<String> listAllRooms() {
-        throw new UnsupportedOperationException("TODO: listAllRooms");
+        Permission.requireLogin(currentUser);
+        List<String> ids = new ArrayList<>(rooms.keySet());
+        Collections.sort(ids);
+        List<String> lines = new ArrayList<>();
+        for (String id : ids) {
+            lines.add(CompatViews.describe(rooms.get(id)));
+        }
+        return lines;
     }
 
     /** REQ17 -- sorted by date and start time. */
     public List<String> listBookings() {
-        throw new UnsupportedOperationException("TODO: listBookings");
+        Permission.requireLogin(currentUser);
+        return new BookingListView(bookings.values()).of(currentUser);
     }
 }
