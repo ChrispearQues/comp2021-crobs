@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The single business entry point (facade). Every command goes through one of
@@ -124,6 +125,21 @@ public class CROBS {
         return user;
     }
 
+    /**
+     * Looks a room up by ID, with the same case-insensitive matching as
+     * {@link #findUser(String)}.
+     */
+    private Room findRoom(String roomId) {
+        if (roomId == null || roomId.isBlank()) {
+            throw new CrobsException.MalformedCommandException("Room ID is missing");
+        }
+        Room room = rooms.get(roomId.trim().toUpperCase(Locale.ROOT));
+        if (room == null) {
+            throw new CrobsException.NotFoundException("No such room: " + roomId);
+        }
+        return room;
+    }
+
     /** Maps a command word such as "admin" to the enum constant. */
     private static Role parseRole(String label) {
         if (label != null) {
@@ -137,19 +153,40 @@ public class CROBS {
                 "Unknown role: " + label + " (expected admin, regular or superadmin)");
     }
 
-    /** REQ7 */
+    /**
+     * REQ7 -- parsing and validation belong to module B's {@link Room}.
+     *
+     * @param roomType one of the four labels of {@link RoomType}
+     * @param capacity the number of seats, as text
+     * @param features the comma-separated features, or "-" for none
+     * @return the generated room ID
+     */
     public String addRoom(String roomType, String capacity, String features) {
-        throw new UnsupportedOperationException("TODO: addRoom");
+        Permission.requireAdmin(currentUser);
+        RoomType type = RoomType.fromLabel(roomType);
+        // Both parsers throw before an ID is minted, so a bad value burns no ID.
+        int seats = Room.parseCapacity(capacity);
+        Set<String> featureSet = Room.parseFeatures(features);
+        String id = roomIds.next();
+        rooms.put(id, new Room(id, type, seats, featureSet));
+        return id;
     }
 
-    /** REQ8 */
+    /** REQ8 -- the field rules live in module B's {@link Room#modify(String, String)}. */
     public void modifyRoom(String roomId, String field, String newValue) {
-        throw new UnsupportedOperationException("TODO: modifyRoom");
+        Permission.requireAdmin(currentUser);
+        findRoom(roomId).modify(field, newValue);
     }
 
-    /** REQ9 -- also cancels all future bookings of this room. */
+    /** REQ9 -- also cancels the bookings of this room. */
     public void deleteRoom(String roomId) {
-        throw new UnsupportedOperationException("TODO: deleteRoom");
+        Permission.requireAdmin(currentUser);
+        Room room = findRoom(roomId);
+        // Minimal safe handling so that no booking points at a removed room.
+        // TODO(REQ9): module C must refine this to "cancel the future bookings only"
+        // (past bookings are history); that rule needs Booking/TimeSlot semantics.
+        bookings.values().removeIf(booking -> booking.getRoomId().equals(room.getId()));
+        rooms.remove(room.getId());
     }
 
     /** REQ10 */
