@@ -3,36 +3,37 @@ package hk.edu.polyu.comp.comp2021.crobs.model;
 /** Generates unique IDs such as U001, R001, B001. */
 public class IdGenerator {
 
+    private static final int FIRST_NUMBER = 1;
+
     private final String prefix;
-    // Prefix letter for the ID (e.g., "U" for User, "R" for Room, "B" for Booking)
-    private final int initialStart;
-    // Tracks the current sequential number to be assigned next
     private int counter;
 
-    // Creates an ID generator starting from 1 (e.g., R001)
-    public IdGenerator(String prefix) {
-        this(prefix,1);
-    }
+    /**
+     * Creates a generator that starts at 1.
+     *
+     * @param prefix the one-letter prefix of the IDs, for example "U"
+     */
+    public IdGenerator(String prefix) { this(prefix, FIRST_NUMBER); }
 
-    // Creates an ID generator with a custom starting number
+    /**
+     * Creates a generator that starts at a given number.
+     *
+     * @param prefix the one-letter prefix of the IDs, for example "U"
+     * @param start  the number of the first ID
+     */
     public IdGenerator(String prefix, int start) {
-        if (prefix == null || prefix.trim().isEmpty()) {
-            throw new CrobsException.MalformedCommandException("ID prefix cannot be empty.");
-        }
-        if (start < 1) {
-            throw new CrobsException.MalformedCommandException("ID starting counter must be at least 1.");
-        }
-        this.prefix = prefix.trim();
-        this.initialStart = start;
+        this.prefix = prefix;
         this.counter = start;
     }
-    // Formats the ID as prefix + 3-digit zero-padded number, then increments counter
-    public String next() {
-        return String.format("%s%03d", prefix, counter++);
-    }
 
-    // Resets the counter back to its initial value (useful for unit tests).
-    public void reset() {
-        this.counter = initialStart;
+    /**
+     * Produces the next ID, for example {@code U001}.
+     *
+     * @return the next unused ID
+     */
+    public String next() {
+        String id = prefix + String.format("%03d", counter);
+        counter++;
+        return id;
     }
 }

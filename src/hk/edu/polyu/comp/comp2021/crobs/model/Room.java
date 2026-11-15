@@ -1,116 +1,152 @@
 package hk.edu.polyu.comp.comp2021.crobs.model;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.Set;
 
-/** A bookable room. */
+/**
+ * A room that can be booked (REQ7, REQ8, REQ15, REQ16).
+ *
+ * <p>Features are normalised to lower case so that {@code Projector} and
+ * {@code projector} mean the same thing when searching.</p>
+ */
 public class Room {
 
-    private final String id;  // Unique room ID (e.g., R001), immutable
-    private RoomType type; // Room classification (REQ7)
-    private int capacity; // Maximum seating capacity (must be > 0)
-    private Set<String> features; // Set of unique room features (e.g., projector, whiteboard)
+    private final String id;
+    private RoomType type;
+    private int capacity;
+    private Set<String> features;
 
+    /**
+     * Creates a room.
+     *
+     * @param id       the unique room ID
+     * @param type     the kind of room
+     * @param capacity how many people fit in the room
+     * @param features the normalised feature set, empty when the room has none
+     */
     public Room(String id, RoomType type, int capacity, Set<String> features) {
-        if (id == null || id.trim().isEmpty()) {
-            throw new CrobsException.MalformedCommandException("Room ID cannot be empty.");
-        }
-        if (type == null) {
-            throw new CrobsException.MalformedCommandException("Room type cannot be null.");
-        }
-        if (capacity <= 0) {
-            throw new CrobsException.MalformedCommandException("Room capacity must be a positive integer.");
-        }
-        this.id = id.trim();
+        this.id = id;
         this.type = type;
         this.capacity = capacity;
-        this.features = (features == null) ? new LinkedHashSet<>() : new LinkedHashSet<>(features);
+        this.features = features;
     }
 
+    /** @return the unique room ID */
     public String getId() { return id; }
 
+    /** @return the kind of room */
     public RoomType getType() { return type; }
 
+    /** @return how many people fit in the room */
     public int getCapacity() { return capacity; }
 
-    public Set<String> getFeatures() { return Collections.unmodifiableSet(features); }
+    /** @return the normalised feature set, empty when the room has none */
+    public Set<String> getFeatures() { return features; }
 
-    /** REQ8: modify a single field. */
+    /**
+     * REQ8: modify a single field. The supported field names are
+     * {@code type}, {@code capacity} and {@code features}.
+     *
+     * @param field    the name of the field to change
+     * @param newValue the new value of that field
+     * @throws CrobsException.MalformedCommandException when the field is unknown
+     *         or the new value is invalid
+     */
     public void modify(String field, String newValue) {
-        if (field == null || field.trim().isEmpty()) {
-            throw new CrobsException.MalformedCommandException("Field name cannot be empty.");
-        }
-        if (newValue == null || newValue.trim().isEmpty()) {
-            throw new CrobsException.MalformedCommandException("New value cannot be empty.");
-        }
-
-        switch (field.trim()) {
-            case "roomType":
-                this.type = RoomType.fromLabel(newValue);
-                break;
-            case "capacity":
-                int parsedCapacity = parseCapacity(newValue);
-                if (parsedCapacity <= 0) {
-                    throw new CrobsException.MalformedCommandException("Capacity must be greater than 0.");
-                }
-                this.capacity = parsedCapacity;
-                break;
-            case "features":
-                this.features = parseFeatures(newValue);
-                break;
-            default:
-                throw new CrobsException.MalformedCommandException(
-                        "Invalid field '" + field + "'. Allowed fields: roomType, capacity, features.");
+        String name = field.toLowerCase(Locale.ROOT);
+        if ("type".equals(name)) {
+            this.type = RoomType.fromLabel(newValue);
+        } else if ("capacity".equals(name)) {
+            this.capacity = parseCapacity(newValue, CrobsMessages.INVALID_CAPACITY);
+        } else if ("features".equals(name)) {
+            this.features = parseFeatures(newValue);
+        } else {
+            throw new CrobsException.MalformedCommandException(
+                    String.format(CrobsMessages.INVALID_FIELD, field));
         }
     }
 
-    // Helper to parse and validate a positive capacity string (used in REQ7 & REQ8)
-    public static int parseCapacity(String capacityStr) {
-        if (capacityStr == null || capacityStr.trim().isEmpty()) {
-            throw new CrobsException.MalformedCommandException("Capacity cannot be empty.");
+    /**
+     * Checks the feature requirement of REQ13.
+     *
+     * @param wanted the features the searcher asked for, already normalised
+     * @return true when this room contains every requested feature
+     */
+    public boolean hasAllFeatures(Set<String> wanted) {
+        return features.containsAll(wanted);
+    }
+
+    /**
+     * Renders the room as it appears in the output of REQ13, REQ15 and REQ16.
+     *
+     * @return "roomId roomType capacity features"
+     */
+    public String describe() {
+        return id + " " + type.getLabel() + " " + capacity + " " + renderFeatures(features);
+    }
+
+    /**
+     * Parses a comma-separated feature list. A dash or an empty text means
+     * "no feature", and empty tokens are ignored.
+     *
+     * @param text the raw feature list of the command line
+     * @return the normalised feature set, never null
+     */
+    public static Set<String> parseFeatures(String text) {
+        Set<String> parsed = new LinkedHashSet<>();
+        if (text == null) {
+            return parsed;
         }
+        for (String token : text.split(",")) {
+            String feature = token.trim().toLowerCase(Locale.ROOT);
+            if (!feature.isEmpty() && !CrobsMessages.NO_FEATURES.equals(feature)) {
+                parsed.add(feature);
+            }
+        }
+        return parsed;
+    }
+
+    /**
+     * Comma-separated feature list, or a dash when the set is empty.
+     *
+     * @param features the features to render
+     * @return the features separated by commas, or "-" when there is none
+     */
+    public static String renderFeatures(Collection<String> features) {
+        if (features.isEmpty()) {
+            return CrobsMessages.NO_FEATURES;
+        }
+        StringBuilder text = new StringBuilder();
+        for (String feature : features) {
+            if (text.length() > 0) {
+                text.append(',');
+            }
+            text.append(feature);
+        }
+        return text.toString();
+    }
+
+    /**
+     * Parses a capacity value.
+     *
+     * @param text    the text to parse
+     * @param message the message pattern to use when the text is invalid
+     * @return the parsed capacity, always positive
+     * @throws CrobsException.MalformedCommandException when the text is not an
+     *         integer, or is negative / zero where a positive value is required
+     */
+    public static int parseCapacity(String text, String message) {
+        int value;
         try {
-            int cap = Integer.parseInt(capacityStr.trim());
-            if (cap <= 0) {
-                throw new CrobsException.MalformedCommandException("Capacity must be greater than 0.");
-            }
-            return cap;
+            value = Integer.parseInt(text);
         } catch (NumberFormatException e) {
-            throw new CrobsException.MalformedCommandException("Invalid capacity number: " + capacityStr);
+            throw new CrobsException.MalformedCommandException(String.format(message, text));
         }
-    }
-
-    // Helper to split comma-separated features into a clean set (treats "-" or empty as none)
-    public static Set<String> parseFeatures(String featuresStr) {
-        Set<String> result = new LinkedHashSet<>();
-        if (featuresStr == null || featuresStr.trim().isEmpty() || "-".equals(featuresStr.trim())) {
-            return result;
+        if (value <= 0) {
+            throw new CrobsException.MalformedCommandException(String.format(message, text));
         }
-        for (String item : featuresStr.split(",")) {
-            String trimmed = item.trim();
-            if (!trimmed.isEmpty()) {
-                result.add(trimmed);
-            }
-        }
-        return result;
+        return value;
     }
-
-    // Returns true if this room contains all requested features (used in REQ13 search)
-    public boolean hasAllFeatures(Collection<String> requiredFeatures) {
-        if (requiredFeatures == null || requiredFeatures.isEmpty()) {
-            return true;
-        }
-        return this.features.containsAll(requiredFeatures);
-    }
-
-    @Override
-    public String toString() {
-        String featureText = features.isEmpty() ? "none" : String.join(",", features);
-        return String.format("%s | %s | capacity=%d | features=%s",
-                id, type.getLabel(), capacity, featureText);
-    }
-
-
 }

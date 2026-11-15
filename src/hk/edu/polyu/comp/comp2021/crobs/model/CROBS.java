@@ -1,6 +1,12 @@
 package hk.edu.polyu.comp.comp2021.crobs.model;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The single business entry point (facade). Every command goes through one of
@@ -9,93 +15,374 @@ import java.util.List;
  */
 public class CROBS {
 
-    // TODO: private final Map<String, User> users / rooms / bookings
-    // TODO: private final IdGenerator userIds, roomIds, bookingIds
-    // TODO: the superadmin is created in the constructor
+    private final Map<String, User> users = new LinkedHashMap<>();
+    private final Map<String, Room> rooms = new LinkedHashMap<>();
+    private final Map<String, Booking> bookings = new LinkedHashMap<>();
 
+    private final IdGenerator userIds = new IdGenerator("U");
+    private final IdGenerator roomIds = new IdGenerator("R");
+    private final IdGenerator bookingIds = new IdGenerator("B");
+
+    private User currentUser;
+
+    /** Creates a fresh system with no user logged in and one superadmin. */
     public CROBS() {
-        // TODO(overview): create the superadmin user
+        String id = userIds.next();
+        users.put(id, new User(id, "superadmin", Role.SUPERADMIN));
     }
 
-    /** REQ5 */
+    /**
+     * Tells who is logged in.
+     *
+     * @return the logged-in user, or null when nobody is logged in
+     */
+    public User getCurrentUser() {
+        return currentUser;
+    }
+
+    /**
+     * REQ5: logs in as an existing user.
+     *
+     * @param userId the ID of the user to log in
+     * @throws CrobsException.NotFoundException      when no user has this ID
+     * @throws CrobsException.MalformedCommandException when that user is already logged in
+     */
     public void login(String userId) {
-        throw new UnsupportedOperationException("TODO: login");
+        User user = users.get(userId);
+        if (user == null) {
+            throw new CrobsException.NotFoundException(
+                    String.format(CrobsMessages.UNKNOWN_USER, userId));
+        }
+        if (user == currentUser) {
+            throw new CrobsException.MalformedCommandException(
+                    String.format(CrobsMessages.ALREADY_LOGGED_IN, userId));
+        }
+        currentUser = user;
     }
 
-    /** REQ6 */
+    /** REQ6: logs out the current user. */
     public void logout() {
-        throw new UnsupportedOperationException("TODO: logout");
+        currentUser = null;
     }
 
-    /** REQ2 */
+    /**
+     * REQ2: creates a regular user.
+     *
+     * @param name the full name of the new user
+     * @return the confirmation line, including the generated user ID
+     * @throws CrobsException.PermissionDeniedException when the caller is not an admin
+     * @throws CrobsException.MalformedCommandException when the name is blank
+     */
     public String addUser(String name) {
-        throw new UnsupportedOperationException("TODO: addUser");
+        Permission.requireAdmin(currentUser);
+        String id = userIds.next();
+        users.put(id, new User(id, requireText(name, CrobsMessages.EMPTY_NAME), Role.REGULAR));
+        return String.format(CrobsMessages.USER_CREATED, id);
     }
 
-    /** REQ3 -- also cancels this user's bookings. */
+    /**
+     * REQ3: removes a regular user and cancels the bookings that user made.
+     *
+     * @param userId the ID of the user to remove
+     * @throws CrobsException.PermissionDeniedException when the caller is not an admin,
+     *         or when the target is not a regular user
+     * @throws CrobsException.NotFoundException          when no user has this ID
+     */
     public void removeUser(String userId) {
-        throw new UnsupportedOperationException("TODO: removeUser");
+        Permission.requireAdmin(currentUser);
+        User target = requireUser(userId);
+        if (target.getRole() != Role.REGULAR) {
+            throw new CrobsException.PermissionDeniedException(CrobsMessages.REGULAR_ONLY);
+        }
+        bookings.values().removeIf(booking -> booking.getUserId().equals(userId));
+        users.remove(userId);
     }
 
-    /** REQ4 -- superadmin only. */
+    /**
+     * REQ4: changes the role of another user. Only the superadmin may do this.
+     *
+     * @param userId  the ID of the user whose role changes
+     * @param newRole "admin" or "regular"
+     * @throws CrobsException.PermissionDeniedException when the caller is not the
+     *         superadmin, or when the target is the superadmin
+     * @throws CrobsException.NotFoundException          when no user has this ID
+     * @throws CrobsException.MalformedCommandException  when the role name is unknown
+     */
     public void changeRole(String userId, String newRole) {
-        throw new UnsupportedOperationException("TODO: changeRole");
+        Permission.requireSuperAdmin(currentUser);
+        User target = requireUser(userId);
+        if (target.getRole() == Role.SUPERADMIN) {
+            throw new CrobsException.PermissionDeniedException(CrobsMessages.SUPERADMIN_FIXED);
+        }
+        target.setRole(parseRole(newRole));
     }
 
-    /** REQ7 */
+    /**
+     * REQ7: creates a room.
+     *
+     * @param roomType one of lectureTheatre, computerLab, seminarRoom, meetingRoom
+     * @param capacity the number of seats, as text
+     * @param features the comma-separated features, or "-" for none
+     * @return the confirmation line, including the generated room ID
+     * @throws CrobsException.PermissionDeniedException when the caller is not an admin
+     * @throws CrobsException.MalformedCommandException when the type, capacity or features are invalid
+     */
     public String addRoom(String roomType, String capacity, String features) {
-        throw new UnsupportedOperationException("TODO: addRoom");
+        Permission.requireAdmin(currentUser);
+        RoomType type = RoomType.fromLabel(roomType);
+        int seats = Room.parseCapacity(capacity, CrobsMessages.INVALID_CAPACITY);
+        String id = roomIds.next();
+        rooms.put(id, new Room(id, type, seats, Room.parseFeatures(features)));
+        return String.format(CrobsMessages.ROOM_CREATED, id);
     }
 
-    /** REQ8 */
+    /**
+     * REQ8: changes one field of a room.
+     *
+     * @param roomId   the room to change
+     * @param field    "type", "capacity" or "features"
+     * @param newValue the new value of that field
+     * @throws CrobsException.PermissionDeniedException when the caller is not an admin
+     * @throws CrobsException.NotFoundException          when the room does not exist
+     * @throws CrobsException.MalformedCommandException  when the field or the value is invalid
+     */
     public void modifyRoom(String roomId, String field, String newValue) {
-        throw new UnsupportedOperationException("TODO: modifyRoom");
+        Permission.requireAdmin(currentUser);
+        requireRoom(roomId).modify(field, newValue);
     }
 
-    /** REQ9 -- also cancels all future bookings of this room. */
+    /**
+     * REQ9: deletes a room and cancels its bookings that are not in the past.
+     *
+     * @param roomId the room to delete
+     * @throws CrobsException.PermissionDeniedException when the caller is not an admin
+     * @throws CrobsException.NotFoundException          when the room does not exist
+     */
     public void deleteRoom(String roomId) {
-        throw new UnsupportedOperationException("TODO: deleteRoom");
+        Permission.requireAdmin(currentUser);
+        Room room = requireRoom(roomId);
+        LocalDate today = LocalDate.now();
+        bookings.values().removeIf(booking -> booking.getRoomId().equals(room.getId())
+                && !DateFormats.parseDate(booking.getTimeSlot().getDate()).isBefore(today));
+        rooms.remove(room.getId());
     }
 
-    /** REQ10 */
+    /**
+     * REQ10: books a room for the logged-in user.
+     *
+     * @param roomId    the room to book
+     * @param date      the day, as yyyy-MM-dd
+     * @param startTime the start time, as HH:mm
+     * @param endTime   the end time, as HH:mm
+     * @param purpose   why the room is needed
+     * @return the confirmation line, including the generated booking ID
+     * @throws CrobsException.PermissionDeniedException when nobody is logged in
+     * @throws CrobsException.NotFoundException          when the room does not exist
+     * @throws CrobsException.ConflictException          when the slot is already taken in that room
+     * @throws CrobsException.MalformedCommandException  when a date, time, interval or purpose is invalid
+     */
     public String book(String roomId, String date, String startTime, String endTime, String purpose) {
-        throw new UnsupportedOperationException("TODO: book");
+        Permission.requireLogin(currentUser);
+        Room room = requireRoom(roomId);
+        TimeSlot slot = parseSlot(date, startTime, endTime);
+        requireFree(room.getId(), slot, null);
+        String id = bookingIds.next();
+        bookings.put(id, new Booking(id, currentUser.getId(), room.getId(), slot,
+                requireText(purpose, CrobsMessages.EMPTY_PURPOSE)));
+        return String.format(CrobsMessages.BOOKING_CREATED, id);
     }
 
-    /** REQ11 */
+    /**
+     * REQ11: changes an existing booking of the logged-in user.
+     *
+     * @param bookingId the booking to change
+     * @param roomId    the new room
+     * @param date      the new day, as yyyy-MM-dd
+     * @param startTime the new start time, as HH:mm
+     * @param endTime   the new end time, as HH:mm
+     * @param purpose   the new purpose
+     * @throws CrobsException.PermissionDeniedException when nobody is logged in,
+     *         or when the booking belongs to somebody else
+     * @throws CrobsException.NotFoundException          when the booking or the room does not exist
+     * @throws CrobsException.ConflictException          when the new slot is already taken
+     * @throws CrobsException.MalformedCommandException  when a date, time, interval or purpose is invalid
+     */
     public void modifyBooking(String bookingId, String roomId, String date,
                               String startTime, String endTime, String purpose) {
-        throw new UnsupportedOperationException("TODO: modifyBooking");
+        Permission.requireLogin(currentUser);
+        Booking booking = requireOwnedBooking(bookingId);
+        Room room = requireRoom(roomId);
+        TimeSlot slot = parseSlot(date, startTime, endTime);
+        requireFree(room.getId(), slot, booking.getId());
+        booking.modify(room.getId(), slot, requireText(purpose, CrobsMessages.EMPTY_PURPOSE));
     }
 
-    /** REQ12 */
+    /**
+     * REQ12: deletes a booking of the logged-in user.
+     *
+     * @param bookingId the booking to delete
+     * @throws CrobsException.PermissionDeniedException when nobody is logged in,
+     *         or when the booking belongs to somebody else
+     * @throws CrobsException.NotFoundException          when the booking does not exist
+     */
     public void deleteBooking(String bookingId) {
-        throw new UnsupportedOperationException("TODO: deleteBooking");
+        Permission.requireLogin(currentUser);
+        Booking booking = requireOwnedBooking(bookingId);
+        bookings.remove(booking.getId());
     }
 
-    /** REQ13 */
+    /**
+     * REQ13: lists the rooms that are free and match the request.
+     *
+     * @param date        the day, as yyyy-MM-dd
+     * @param startTime   the start time, as HH:mm
+     * @param endTime     the end time, as HH:mm
+     * @param minCapacity the smallest acceptable capacity
+     * @param features    the required features, comma separated, or "-" for none
+     * @return one line per matching room
+     * @throws CrobsException.PermissionDeniedException when nobody is logged in
+     * @throws CrobsException.MalformedCommandException when a date, time, interval or capacity is invalid
+     */
     public List<String> search(String date, String startTime, String endTime,
                                String minCapacity, String features) {
-        throw new UnsupportedOperationException("TODO: search");
+        Permission.requireLogin(currentUser);
+        return new RoomSearch(rooms.values(), bookings.values())
+                .search(date, startTime, endTime, minCapacity, features);
     }
 
-    /** REQ14 -- regular users only see their own user IDs. */
+    /**
+     * REQ14: shows the bookings of one room for one week. A regular user only
+     * sees their own user IDs.
+     *
+     * @param roomId        the room whose schedule is requested
+     * @param weekStartDate the first day of the week, as yyyy-MM-dd
+     * @return one line per booking
+     * @throws CrobsException.PermissionDeniedException when nobody is logged in
+     * @throws CrobsException.NotFoundException          when the room does not exist
+     * @throws CrobsException.MalformedCommandException  when the date is invalid
+     */
     public List<String> schedule(String roomId, String weekStartDate) {
-        throw new UnsupportedOperationException("TODO: schedule");
+        Permission.requireLogin(currentUser);
+        return new ScheduleView(rooms, bookings.values()).week(roomId, weekStartDate, currentUser);
     }
 
-    /** REQ15 */
+    /**
+     * REQ15: shows one room.
+     *
+     * @param roomId the room to show
+     * @return one line describing the room
+     * @throws CrobsException.PermissionDeniedException when nobody is logged in
+     * @throws CrobsException.NotFoundException          when the room does not exist
+     */
     public String listRoom(String roomId) {
-        throw new UnsupportedOperationException("TODO: listRoom");
+        Permission.requireLogin(currentUser);
+        return requireRoom(roomId).describe();
     }
 
-    /** REQ16 -- sorted by room ID ascending. */
+    /**
+     * REQ16: shows every room, sorted by room ID.
+     *
+     * @return one line per room
+     * @throws CrobsException.PermissionDeniedException when nobody is logged in
+     */
     public List<String> listAllRooms() {
-        throw new UnsupportedOperationException("TODO: listAllRooms");
+        Permission.requireLogin(currentUser);
+        List<String> ids = new ArrayList<>(rooms.keySet());
+        Collections.sort(ids);
+        List<String> lines = new ArrayList<>();
+        for (String id : ids) {
+            lines.add(rooms.get(id).describe());
+        }
+        return lines;
     }
 
-    /** REQ17 -- sorted by date and start time. */
+    /**
+     * REQ17: shows every booking of the logged-in user, sorted by date and start time.
+     *
+     * @return one line per booking
+     * @throws CrobsException.PermissionDeniedException when nobody is logged in
+     */
     public List<String> listBookings() {
-        throw new UnsupportedOperationException("TODO: listBookings");
+        Permission.requireLogin(currentUser);
+        return new BookingListView(bookings.values()).of(currentUser);
+    }
+
+    // ---- helpers -----------------------------------------------------------
+
+    private User requireUser(String userId) {
+        User user = users.get(userId);
+        if (user == null) {
+            throw new CrobsException.NotFoundException(
+                    String.format(CrobsMessages.UNKNOWN_USER, userId));
+        }
+        return user;
+    }
+
+    private Room requireRoom(String roomId) {
+        Room room = rooms.get(roomId);
+        if (room == null) {
+            throw new CrobsException.NotFoundException(
+                    String.format(CrobsMessages.UNKNOWN_ROOM, roomId));
+        }
+        return room;
+    }
+
+    /** The booking must exist and belong to the logged-in user. */
+    private Booking requireOwnedBooking(String bookingId) {
+        Booking booking = bookings.get(bookingId);
+        if (booking == null) {
+            throw new CrobsException.NotFoundException(
+                    String.format(CrobsMessages.UNKNOWN_BOOKING, bookingId));
+        }
+        if (!booking.getUserId().equals(currentUser.getId())) {
+            throw new CrobsException.PermissionDeniedException(CrobsMessages.NOT_OWNER);
+        }
+        return booking;
+    }
+
+    private static TimeSlot parseSlot(String date, String startTime, String endTime) {
+        LocalDate day = DateFormats.parseDate(date);
+        LocalTime start = DateFormats.parseTime(startTime);
+        LocalTime end = DateFormats.parseTime(endTime);
+        DateFormats.requireOrdered(start, end);
+        return new TimeSlot(day.toString(), startTime, endTime);
+    }
+
+    /**
+     * @param ignoredBooking ID of the booking being modified, so that a booking
+     *                       does not conflict with itself
+     */
+    private void requireFree(String roomId, TimeSlot slot, String ignoredBooking) {
+        for (Booking booking : bookings.values()) {
+            if (booking.getId().equals(ignoredBooking)) {
+                continue;
+            }
+            if (!booking.getRoomId().equals(roomId)) {
+                continue;
+            }
+            if (booking.getTimeSlot().overlaps(slot)) {
+                throw new CrobsException.ConflictException(String.format(CrobsMessages.CONFLICT,
+                        roomId, booking.getTimeSlot().getStartTime(),
+                        booking.getTimeSlot().getEndTime(), booking.getTimeSlot().getDate()));
+            }
+        }
+    }
+
+    private static Role parseRole(String text) {
+        if ("admin".equalsIgnoreCase(text)) {
+            return Role.ADMIN;
+        }
+        if ("regular".equalsIgnoreCase(text)) {
+            return Role.REGULAR;
+        }
+        throw new CrobsException.MalformedCommandException(
+                String.format(CrobsMessages.INVALID_ROLE, text));
+    }
+
+    private static String requireText(String text, String message) {
+        if (text == null || text.trim().isEmpty()) {
+            throw new CrobsException.MalformedCommandException(message);
+        }
+        return text.trim();
     }
 }

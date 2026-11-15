@@ -7,7 +7,13 @@ out/
 # Build output
 bin/
 target/
+out/
+out-test/
 *.class
+
+# Crobs session logs
+log.html
+log.txt
 
 # OS
 .DS_Store

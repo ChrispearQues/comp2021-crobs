@@ -1,81 +1,137 @@
 package hk.edu.polyu.comp.comp2021.crobs.model;
 
-import org.junit.jupiter.api.Test;
-
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Set;
+
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class RoomTest {
-    @Test
-    void testValidRoomCreationAndHelpers() {
-        Set<String> features = Room.parseFeatures("projector, whiteboard, projector");
-        Room room = new Room("R001", RoomType.LECTURE_THEATRE, 120, features);
+class RoomTest {
 
-        assertEquals("R001", room.getId());
-        assertEquals(RoomType.LECTURE_THEATRE, room.getType());
+    private static final Class<CrobsException.MalformedCommandException> MALFORMED =
+            CrobsException.MalformedCommandException.class;
+
+    private static Room room(String... features) {
+        Set<String> set = new LinkedHashSet<>();
+        for (String feature : features) {
+            set.add(feature);
+        }
+        return new Room("R001", RoomType.COMPUTER_LAB, 40, set);
+    }
+
+    @Test
+    void describesTheRoomInOneLine() {
+        assertEquals("R001 computerLab 40 projector,whiteboard",
+                room("projector", "whiteboard").describe());
+    }
+
+    @Test
+    void describesARoomWithoutFeaturesWithADash() {
+        assertEquals("R001 computerLab 40 -", room().describe());
+    }
+
+    @Test
+    void parsesFeaturesByTrimmingAndLowerCasing() {
+        Set<String> parsed = Room.parseFeatures(" Projector , WHITEBOARD ");
+
+        assertEquals(2, parsed.size());
+        assertTrue(parsed.contains("projector"));
+        assertTrue(parsed.contains("whiteboard"));
+    }
+
+    @Test
+    void treatsADashAsNoFeature() {
+        assertTrue(Room.parseFeatures("-").isEmpty());
+    }
+
+    @Test
+    void treatsAnEmptyListAsNoFeature() {
+        assertTrue(Room.parseFeatures("").isEmpty());
+        assertTrue(Room.parseFeatures(null).isEmpty());
+    }
+
+    @Test
+    void ignoresEmptyFeatureTokens() {
+        assertEquals(2, Room.parseFeatures("a,,b,").size());
+    }
+
+    @Test
+    void checksWhetherAllFeaturesArePresent() {
+        Room room = room("projector", "whiteboard");
+
+        assertTrue(room.hasAllFeatures(Room.parseFeatures("projector")));
+        assertTrue(room.hasAllFeatures(Room.parseFeatures("-")));
+        assertFalse(room.hasAllFeatures(Room.parseFeatures("projector,wifi")));
+    }
+
+    @Test
+    void modifiesTheType() {
+        Room room = room("projector");
+
+        room.modify("TYPE", "seminarRoom");
+
+        assertEquals(RoomType.SEMINAR_ROOM, room.getType());
+    }
+
+    @Test
+    void modifiesTheCapacity() {
+        Room room = room("projector");
+
+        room.modify("capacity", "120");
+
         assertEquals(120, room.getCapacity());
-        assertEquals(2, room.getFeatures().size());
-        assertTrue(room.hasAllFeatures(Arrays.asList("projector", "whiteboard")));
-        assertFalse(room.hasAllFeatures(Collections.singletonList("computers")));
-        assertEquals("R001 | lectureTheatre | capacity=120 | features=projector,whiteboard", room.toString());
     }
 
     @Test
-    void testModifyRoomAndEmptyFeaturesBoundary() {
-        Room room = new Room("R002", RoomType.MEETING_ROOM, 1, null);
-        assertTrue(room.getFeatures().isEmpty());
-        assertTrue(room.hasAllFeatures(null));
-        assertTrue(room.hasAllFeatures(Collections.emptyList()));
-        assertEquals("R002 | meetingRoom | capacity=1 | features=none", room.toString());
+    void modifiesTheFeatures() {
+        Room room = room("projector");
 
-        room.modify("roomType", "computerLab");
-        assertEquals(RoomType.COMPUTER_LAB, room.getType());
+        room.modify("features", "wifi,Projector");
 
-        room.modify("capacity", "45");
-        assertEquals(45, room.getCapacity());
-
-        room.modify("features", "computers, microphone");
-        assertEquals(2, room.getFeatures().size());
-
-        room.modify("features", "-");
-        assertTrue(room.getFeatures().isEmpty());
+        assertEquals("wifi,projector", Room.renderFeatures(room.getFeatures()));
     }
 
     @Test
-    void testInvalidRoomAndRoomTypeThrowException() {
-        // Invalid RoomType labels
-        assertThrows(CrobsException.MalformedCommandException.class, () -> RoomType.fromLabel(null));
-        assertThrows(CrobsException.MalformedCommandException.class, () -> RoomType.fromLabel("   "));
-        assertThrows(CrobsException.MalformedCommandException.class, () -> RoomType.fromLabel("auditorium"));
+    void rejectsAnUnknownField() {
+        Room room = room("projector");
 
-        // Invalid Room constructor arguments
-        assertThrows(CrobsException.MalformedCommandException.class,
-                () -> new Room(null, RoomType.SEMINAR_ROOM, 20, null));
-        assertThrows(CrobsException.MalformedCommandException.class,
-                () -> new Room("   ", RoomType.SEMINAR_ROOM, 20, null));
-        assertThrows(CrobsException.MalformedCommandException.class,
-                () -> new Room("R003", null, 20, null));
-        assertThrows(CrobsException.MalformedCommandException.class,
-                () -> new Room("R003", RoomType.SEMINAR_ROOM, 0, null));
-        assertThrows(CrobsException.MalformedCommandException.class,
-                () -> new Room("R003", RoomType.SEMINAR_ROOM, -10, null));
+        assertThrows(MALFORMED, () -> room.modify("colour", "blue"));
+    }
 
-        // Invalid capacity parsing and modify arguments
-        assertThrows(CrobsException.MalformedCommandException.class, () -> Room.parseCapacity(null));
-        assertThrows(CrobsException.MalformedCommandException.class, () -> Room.parseCapacity("abc"));
-        assertThrows(CrobsException.MalformedCommandException.class, () -> Room.parseCapacity("0"));
+    @Test
+    void rejectsAnUnknownType() {
+        Room room = room("projector");
 
-        Room validRoom = new Room("R003", RoomType.SEMINAR_ROOM, 20, null);
-        assertThrows(CrobsException.MalformedCommandException.class, () -> validRoom.modify(null, "10"));
-        assertThrows(CrobsException.MalformedCommandException.class, () -> validRoom.modify("capacity", ""));
-        assertThrows(CrobsException.MalformedCommandException.class, () -> validRoom.modify("unknownField", "10"));
-        assertThrows(CrobsException.MalformedCommandException.class, () -> validRoom.modify("capacity", "-5"));
-        assertThrows(CrobsException.MalformedCommandException.class, () -> validRoom.modify("roomType", "badType"));
+        assertThrows(MALFORMED, () -> room.modify("type", "cinema"));
+    }
+
+    @Test
+    void rejectsACapacityThatIsNotANumber() {
+        Room room = room("projector");
+
+        assertThrows(MALFORMED, () -> room.modify("capacity", "many"));
+    }
+
+    @Test
+    void rejectsACapacityOfZeroOrLess() {
+        Room room = room("projector");
+
+        assertThrows(MALFORMED, () -> room.modify("capacity", "0"));
+        assertThrows(MALFORMED, () -> room.modify("capacity", "-5"));
+    }
+
+    @Test
+    void parsesACapacity() {
+        assertEquals(30, Room.parseCapacity("30", CrobsMessages.INVALID_CAPACITY));
+        assertThrows(MALFORMED, () -> Room.parseCapacity("3.5", CrobsMessages.INVALID_CAPACITY));
+    }
+
+    @Test
+    void rendersAnEmptyFeatureSetAsADash() {
+        assertEquals("-", Room.renderFeatures(new LinkedHashSet<String>()));
     }
 }

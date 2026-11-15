@@ -1,6 +1,8 @@
 package hk.edu.polyu.comp.comp2021.crobs.controller;
 
+import hk.edu.polyu.comp.comp2021.crobs.controller.command.QuitCommand;
 import hk.edu.polyu.comp.comp2021.crobs.io.OperationLogger;
+import hk.edu.polyu.comp.comp2021.crobs.model.CrobsException;
 import hk.edu.polyu.comp.comp2021.crobs.view.View;
 
 /**
@@ -14,16 +16,51 @@ public class Dispatcher {
     private final View view;
     private int counter;
 
+    /**
+     * Creates the dispatcher.
+     *
+     * @param parser turns a raw line into a command
+     * @param logger records every line (REQ1)
+     * @param view   prints the result of a command
+     */
     public Dispatcher(CommandParser parser, OperationLogger logger, View view) {
         this.parser = parser;
         this.logger = logger;
         this.view = view;
     }
 
-    /** Returns false when the session should end (quit). */
+    /**
+     * Executes one input line.
+     *
+     * @param line the raw line typed by the user
+     * @return false when the session should end (quit), true otherwise
+     */
     public boolean dispatch(String line) {
-        // TODO: increment counter, log the raw command, execute, print result,
-        //       catch CrobsException and print its message
-        throw new UnsupportedOperationException("TODO: Dispatcher.dispatch");
+        if (line == null || line.trim().isEmpty()) {
+            return true;
+        }
+        String command = line.trim();
+        counter++;
+        logger.log(counter, command);
+
+        Command parsed;
+        try {
+            parsed = parser.parse(command);
+        } catch (CrobsException e) {
+            view.printError(e.getMessage());
+            return true;
+        }
+        if (parsed instanceof QuitCommand) {
+            return false;
+        }
+        try {
+            String result = parsed.execute();
+            if (result != null && !result.isEmpty()) {
+                view.print(result);
+            }
+        } catch (CrobsException e) {
+            view.printError(e.getMessage());
+        }
+        return true;
     }
 }
