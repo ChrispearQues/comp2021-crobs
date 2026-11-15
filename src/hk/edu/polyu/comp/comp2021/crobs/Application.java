@@ -33,36 +33,21 @@ public class Application {
             "Usage: java " + Application.class.getName()
                     + " [-txt <command-log.txt>] [-html <command-log.html>]";
 
-    public static void main(String[] args) {
-        Path txtLog = null;
-        Path htmlLog = null;
+    /** The log files requested on the command line; either one may be absent. */
+    record Options(Path txtLog, Path htmlLog) { }
 
-        for (int i = 0; i < args.length; i++) {
-            switch (args[i]) {
-                case "-txt" -> {
-                    if (i + 1 >= args.length) {
-                        fail("Missing file name after -txt");
-                        return;
-                    }
-                    txtLog = Path.of(args[++i]);
-                }
-                case "-html" -> {
-                    if (i + 1 >= args.length) {
-                        fail("Missing file name after -html");
-                        return;
-                    }
-                    htmlLog = Path.of(args[++i]);
-                }
-                default -> {
-                    fail("Unknown option: " + args[i]);
-                    return;
-                }
-            }
+    public static void main(String[] args) {
+        Options options;
+        try {
+            options = parseOptions(args);
+        } catch (IllegalArgumentException e) {
+            fail(e.getMessage());
+            return;
         }
 
         OperationLogger logger;
         try {
-            logger = createLoggers(txtLog, htmlLog);
+            logger = createLoggers(options.txtLog(), options.htmlLog());
         } catch (RuntimeException e) {
             // No stack trace for an ordinary user error; the exit status tells scripts it failed.
             die(e.getMessage());
@@ -86,6 +71,46 @@ public class Application {
         if (status != 0) {
             System.exit(status);
         }
+    }
+
+    /**
+     * Turns the raw arguments into {@link Options}.
+     * Package-private so that the command line can be tested without exiting the JVM.
+     *
+     * @throws IllegalArgumentException on a missing file name, an unknown option, or
+     *         when the same file is given to both {@code -txt} and {@code -html}
+     */
+    static Options parseOptions(String[] args) {
+        Path txtLog = null;
+        Path htmlLog = null;
+
+        for (int i = 0; i < args.length; i++) {
+            switch (args[i]) {
+                case "-txt" -> {
+                    if (i + 1 >= args.length) {
+                        throw new IllegalArgumentException("Missing file name after -txt");
+                    }
+                    txtLog = Path.of(args[++i]);
+                }
+                case "-html" -> {
+                    if (i + 1 >= args.length) {
+                        throw new IllegalArgumentException("Missing file name after -html");
+                    }
+                    htmlLog = Path.of(args[++i]);
+                }
+                default -> throw new IllegalArgumentException("Unknown option: " + args[i]);
+            }
+        }
+
+        if (txtLog != null && htmlLog != null && samePath(txtLog, htmlLog)) {
+            // Two writers on one file would interleave a broken table into the log.
+            throw new IllegalArgumentException("The -txt and -html logs must be two different files");
+        }
+        return new Options(txtLog, htmlLog);
+    }
+
+    private static boolean samePath(Path first, Path second) {
+        return first.toAbsolutePath().normalize().equals(second.toAbsolutePath().normalize());
     }
 
     /** Builds the (possibly empty) composite of the log files requested on the command line. */
