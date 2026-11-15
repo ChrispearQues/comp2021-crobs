@@ -47,7 +47,7 @@ public class Dispatcher {
         try {
             parsed = parser.parse(command);
         } catch (CrobsException e) {
-            view.printError(e.getMessage());
+            view.printError("Error: " + e.getMessage());
             return true;
         }
         if (parsed instanceof QuitCommand) {
@@ -59,7 +59,7 @@ public class Dispatcher {
                 view.print(result);
             }
         } catch (CrobsException e) {
-            view.printError(e.getMessage());
+            view.printError("Error: " + e.getMessage());
         }
         return true;
     }

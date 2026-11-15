@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -545,6 +546,23 @@ class CROBSTest {
 
         assertEquals(Collections.singletonList(
                 "B001 " + DATE + " 09:00-11:00 U002 group meeting"), crobs.schedule("R001", WEEK));
+    }
+
+    @Test
+    void scheduleAcceptsALowerCaseRoomId() {
+        standardFixture();
+        crobs.book("R001", DATE, "09:00", "11:00", "group meeting");
+
+        assertEquals(Collections.singletonList(
+                "B001 " + DATE + " 09:00-11:00 U001 group meeting"), crobs.schedule("r001", WEEK));
+    }
+
+    @Test
+    void errorMessagesLeaveThePrefixToTheDispatcher() {
+        assertFalse(CrobsMessages.INVALID_DATE.startsWith("Error:"));
+        assertFalse(CrobsMessages.UNKNOWN_ROOM.startsWith("Error:"));
+        assertEquals("Invalid date \"abc\", expected yyyy-MM-dd.",
+                String.format(CrobsMessages.INVALID_DATE, "abc"));
     }
 
     @Test

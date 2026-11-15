@@ -130,8 +130,17 @@ class ScheduleViewTest {
     }
 
     @Test
-    void rejectsAnUnknownRoom() {
-        assertThrows(CrobsException.NotFoundException.class,
+    void findsTheRoomWhateverTheCaseOfTheId() {
+        List<Booking> bookings = Arrays.asList(
+                booking("B001", "U002", "R001", "2026-11-16", "09:00", "11:00", "mine"));
+
+        List<String> lines = new ScheduleView(rooms(), bookings).week("r001", WEEK, user("U002", Role.REGULAR));
+
+        assertEquals(Collections.singletonList("B001 2026-11-16 09:00-11:00 U002 mine"), lines);
+    }
+
+    @Test
+    void rejectsAnUnknownRoom() {        assertThrows(CrobsException.NotFoundException.class,
                 () -> new ScheduleView(rooms(), Collections.<Booking>emptyList())
                         .week("R999", WEEK, user("U002", Role.REGULAR)));
     }

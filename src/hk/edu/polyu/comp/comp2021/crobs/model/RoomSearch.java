@@ -79,7 +79,14 @@ public class RoomSearch {
         return lines;
     }
 
-    /** True when an existing booking of this room overlaps the requested slot. */
+    /**
+     * True when an existing booking of this room overlaps the requested slot.
+     *
+     * <p>Dependency: the overlap test itself belongs to module C
+     * ({@link TimeSlot#overlaps(TimeSlot)}, REQ10). Until that method is
+     * implemented, a search over a non-empty booking list fails loudly rather
+     * than guessing which rooms are free.</p>
+     */
     private boolean isBusy(Room room, TimeSlot slot) {
         for (Booking booking : bookings) {
             if (booking.getRoomId().equals(room.getId()) && booking.getTimeSlot().overlaps(slot)) {
