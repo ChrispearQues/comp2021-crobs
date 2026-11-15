@@ -114,5 +114,8 @@ public final class CrobsMessages {
     /** Error for an empty input line. */
     public static final String EMPTY_COMMAND = "Error: please type a command.";
 
+    /** Error for a double quote that is never closed. */
+    public static final String UNTERMINATED_QUOTE = "Error: unterminated quoted argument.";
+
     private CrobsMessages() { }
 }

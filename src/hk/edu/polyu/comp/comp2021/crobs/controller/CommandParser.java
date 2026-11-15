@@ -20,8 +20,11 @@ import hk.edu.polyu.comp.comp2021.crobs.controller.command.SearchCommand;
 import hk.edu.polyu.comp.comp2021.crobs.model.CROBS;
 import hk.edu.polyu.comp.comp2021.crobs.model.CrobsException;
 import hk.edu.polyu.comp.comp2021.crobs.model.CrobsMessages;
-import java.util.Arrays;
+
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Turns a raw input line into a {@link Command}. Only syntax is checked here;
@@ -64,53 +67,54 @@ public class CommandParser {
     }
 
     /**
-     * Parses one input line.
+     * Parses one input line. Command words are case-insensitive.
      *
      * @param line the raw line typed by the user
      * @return the command that corresponds to the line
-     * @throws CrobsException.MalformedCommandException on an unknown command or a wrong argument count
+     * @throws CrobsException.MalformedCommandException on an unknown command, a wrong
+     *         argument count or an unterminated quote
      */
     public Command parse(String line) {
         if (line == null || line.trim().isEmpty()) {
             throw new CrobsException.MalformedCommandException(CrobsMessages.EMPTY_COMMAND);
         }
-        String text = line.trim();
-        String name = text.split("\\s+")[0];
+        List<String> tokens = tokenize(line.trim());
+        String name = tokens.get(0).toLowerCase(Locale.ROOT);
 
         if ("login".equals(name)) {
-            return new LoginCommand(crobs, arguments(text, LOGIN_USAGE, name).next());
+            return new LoginCommand(crobs, arguments(tokens, LOGIN_USAGE, name).next());
         }
         if ("logout".equals(name)) {
-            requireArity(text, LOGOUT_USAGE, name);
+            requireArity(tokens, LOGOUT_USAGE, name);
             return new LogoutCommand(crobs);
         }
         if ("quit".equals(name)) {
-            requireArity(text, QUIT_USAGE, name);
+            requireArity(tokens, QUIT_USAGE, name);
             return new QuitCommand(crobs);
         }
-        if ("addUser".equals(name)) {
-            return new AddUserCommand(crobs, argumentsWithTail(text, ADD_USER_USAGE, name).next());
+        if ("adduser".equals(name)) {
+            return new AddUserCommand(crobs, argumentsWithTail(tokens, ADD_USER_USAGE, name).next());
         }
-        if ("removeUser".equals(name)) {
-            return new RemoveUserCommand(crobs, arguments(text, REMOVE_USER_USAGE, name).next());
+        if ("removeuser".equals(name)) {
+            return new RemoveUserCommand(crobs, arguments(tokens, REMOVE_USER_USAGE, name).next());
         }
-        if ("changeRole".equals(name)) {
-            Iterator<String> args = arguments(text, CHANGE_ROLE_USAGE, name);
+        if ("changerole".equals(name)) {
+            Iterator<String> args = arguments(tokens, CHANGE_ROLE_USAGE, name);
             return new ChangeRoleCommand(crobs, args.next(), args.next());
         }
-        if ("addRoom".equals(name)) {
-            Iterator<String> args = arguments(text, ADD_ROOM_USAGE, name);
+        if ("addroom".equals(name)) {
+            Iterator<String> args = arguments(tokens, ADD_ROOM_USAGE, name);
             return new AddRoomCommand(crobs, args.next(), args.next(), args.next());
         }
-        if ("modifyRoom".equals(name)) {
-            Iterator<String> args = arguments(text, MODIFY_ROOM_USAGE, name);
+        if ("modifyroom".equals(name)) {
+            Iterator<String> args = arguments(tokens, MODIFY_ROOM_USAGE, name);
             return new ModifyRoomCommand(crobs, args.next(), args.next(), args.next());
         }
-        if ("deleteRoom".equals(name)) {
-            return new DeleteRoomCommand(crobs, arguments(text, DELETE_ROOM_USAGE, name).next());
+        if ("deleteroom".equals(name)) {
+            return new DeleteRoomCommand(crobs, arguments(tokens, DELETE_ROOM_USAGE, name).next());
         }
         if ("book".equals(name)) {
-            Iterator<String> args = argumentsWithTail(text, BOOK_USAGE, name);
+            Iterator<String> args = argumentsWithTail(tokens, BOOK_USAGE, name);
             String roomId = args.next();
             String date = args.next();
             String startTime = args.next();
@@ -118,8 +122,8 @@ public class CommandParser {
             String purpose = args.next();
             return new BookCommand(crobs, roomId, date, startTime, endTime, purpose);
         }
-        if ("modifyBooking".equals(name)) {
-            Iterator<String> args = argumentsWithTail(text, MODIFY_BOOKING_USAGE, name);
+        if ("modifybooking".equals(name)) {
+            Iterator<String> args = argumentsWithTail(tokens, MODIFY_BOOKING_USAGE, name);
             String bookingId = args.next();
             String roomId = args.next();
             String date = args.next();
@@ -128,11 +132,12 @@ public class CommandParser {
             String purpose = args.next();
             return new ModifyBookingCommand(crobs, bookingId, roomId, date, startTime, endTime, purpose);
         }
-        if ("deleteBooking".equals(name)) {
-            return new DeleteBookingCommand(crobs, arguments(text, DELETE_BOOKING_USAGE, name).next());
+        if ("deletebooking".equals(name)) {
+            return new DeleteBookingCommand(crobs,
+                    arguments(tokens, DELETE_BOOKING_USAGE, name).next());
         }
         if ("search".equals(name)) {
-            Iterator<String> args = arguments(text, SEARCH_USAGE, name);
+            Iterator<String> args = arguments(tokens, SEARCH_USAGE, name);
             String date = args.next();
             String startTime = args.next();
             String endTime = args.next();
@@ -141,54 +146,96 @@ public class CommandParser {
             return new SearchCommand(crobs, date, startTime, endTime, minCapacity, features);
         }
         if ("schedule".equals(name)) {
-            Iterator<String> args = arguments(text, SCHEDULE_USAGE, name);
+            Iterator<String> args = arguments(tokens, SCHEDULE_USAGE, name);
             return new ScheduleCommand(crobs, args.next(), args.next());
         }
-        if ("listRoom".equals(name)) {
-            return new ListRoomCommand(crobs, arguments(text, LIST_ROOM_USAGE, name).next());
+        if ("listroom".equals(name)) {
+            return new ListRoomCommand(crobs, arguments(tokens, LIST_ROOM_USAGE, name).next());
         }
-        if ("listAllRooms".equals(name)) {
-            requireArity(text, LIST_ALL_ROOMS_USAGE, name);
+        if ("listallrooms".equals(name)) {
+            requireArity(tokens, LIST_ALL_ROOMS_USAGE, name);
             return new ListAllRoomsCommand(crobs);
         }
-        if ("listBookings".equals(name)) {
-            requireArity(text, LIST_BOOKINGS_USAGE, name);
+        if ("listbookings".equals(name)) {
+            requireArity(tokens, LIST_BOOKINGS_USAGE, name);
             return new ListBookingsCommand(crobs);
         }
         throw new CrobsException.MalformedCommandException(
-                String.format(CrobsMessages.UNKNOWN_COMMAND, name));
-    }
-
-    /** The arguments of a line whose words must match the usage exactly. */
-    private static Iterator<String> arguments(String text, String usage, String name) {
-        requireArity(text, usage, name);
-        return tail(text.split("\\s+"));
+                String.format(CrobsMessages.UNKNOWN_COMMAND, tokens.get(0)));
     }
 
     /**
-     * The arguments of a line whose last argument may contain spaces, such as
-     * a user name or the purpose of a booking.
+     * Splits on whitespace, but keeps a double-quoted span together, so that a
+     * booking purpose such as {@code "Group meeting"} stays one argument.
+     *
+     * <p>Package-private so that the tokenizer can be tested without faking a
+     * whole REPL.</p>
+     *
+     * @param line one input line, already trimmed
+     * @return the words of the line, in order; never empty for a non-blank line
+     * @throws CrobsException.MalformedCommandException when a quote is left open
      */
-    private static Iterator<String> argumentsWithTail(String text, String usage, String name) {
+    static List<String> tokenize(String line) {
+        List<String> tokens = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        boolean inQuotes = false;
+        boolean started = false;
+
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (c == '"') {
+                inQuotes = !inQuotes;
+                started = true;
+            } else if (Character.isWhitespace(c) && !inQuotes) {
+                if (started) {
+                    tokens.add(current.toString());
+                    current.setLength(0);
+                    started = false;
+                }
+            } else {
+                current.append(c);
+                started = true;
+            }
+        }
+        if (inQuotes) {
+            throw new CrobsException.MalformedCommandException(CrobsMessages.UNTERMINATED_QUOTE);
+        }
+        if (started) {
+            tokens.add(current.toString());
+        }
+        return tokens;
+    }
+
+    /** The arguments of a line whose words must match the usage exactly. */
+    private static Iterator<String> arguments(List<String> tokens, String usage, String name) {
+        requireArity(tokens, usage, name);
+        return tokens.subList(1, tokens.size()).iterator();
+    }
+
+    /**
+     * The arguments of a line whose last argument may contain spaces, such as a
+     * user name or the purpose of a booking: the words after the fixed ones are
+     * joined back into one argument.
+     */
+    private static Iterator<String> argumentsWithTail(List<String> tokens, String usage, String name) {
         int count = wordCount(usage);
-        String[] words = text.split("\\s+", count);
-        if (words.length != count) {
-            throw new CrobsException.MalformedCommandException(
-                    String.format(CrobsMessages.WRONG_ARGS, name));
+        if (tokens.size() < count) {
+            throw wrongArgs(name);
         }
-        return tail(words);
+        List<String> args = new ArrayList<>(tokens.subList(1, count - 1));
+        args.add(String.join(" ", tokens.subList(count - 1, tokens.size())));
+        return args.iterator();
     }
 
-    private static void requireArity(String text, String usage, String name) {
-        if (text.split("\\s+").length != wordCount(usage)) {
-            throw new CrobsException.MalformedCommandException(
-                    String.format(CrobsMessages.WRONG_ARGS, name));
+    private static void requireArity(List<String> tokens, String usage, String name) {
+        if (tokens.size() != wordCount(usage)) {
+            throw wrongArgs(name);
         }
     }
 
-    /** Drops the command word and hands out the remaining words. */
-    private static Iterator<String> tail(String[] words) {
-        return Arrays.asList(words).subList(1, words.length).iterator();
+    private static CrobsException.MalformedCommandException wrongArgs(String name) {
+        return new CrobsException.MalformedCommandException(
+                String.format(CrobsMessages.WRONG_ARGS, name));
     }
 
     private static int wordCount(String usage) {
