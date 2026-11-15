@@ -18,16 +18,29 @@ public class RoomSearch {
     private final Collection<Room> rooms;
     private final Collection<Booking> bookings;
 
+    /**
+     * Creates a search over a snapshot of the current rooms and bookings.
+     *
+     * @param rooms    the rooms to consider
+     * @param bookings the bookings that make a room unavailable
+     */
     public RoomSearch(Collection<Room> rooms, Collection<Booking> bookings) {
         this.rooms = rooms;
         this.bookings = bookings;
     }
 
     /**
+     * Lists the rooms that match every criterion of REQ13.
+     *
+     * @param date        the day of the requested slot, as yyyy-MM-dd
+     * @param startTime   the start of the requested slot, as HH:mm
+     * @param endTime     the end of the requested slot, as HH:mm
+     * @param minCapacity the smallest acceptable capacity
+     * @param features    the required features, comma separated, or "-" for none
      * @return one line per matching room, sorted by room ID, or a single
-     *         "no match" line when nothing fits.
+     *         "no match" line when nothing fits
      * @throws CrobsException.MalformedCommandException for a bad date, time,
-     *         interval, capacity or feature list.
+     *         interval, capacity or feature list
      */
     public List<String> search(String date, String startTime, String endTime,
                                String minCapacity, String features) {

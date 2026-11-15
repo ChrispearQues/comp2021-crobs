@@ -18,18 +18,27 @@ public class ScheduleView {
     private final Map<String, Room> rooms;
     private final Collection<Booking> bookings;
 
+    /**
+     * Creates a view over a snapshot of the current rooms and bookings.
+     *
+     * @param rooms    the rooms, indexed by ID
+     * @param bookings the bookings to display
+     */
     public ScheduleView(Map<String, Room> rooms, Collection<Booking> bookings) {
         this.rooms = rooms;
         this.bookings = bookings;
     }
 
     /**
-     * @param weekStartDate first day of the window; the window is the seven
-     *                      days {@code [start, start + 6]}.
+     * Lists the bookings of one room inside a seven-day window.
+     *
+     * @param roomId        the room whose schedule is requested
+     * @param weekStartDate the first day of the window, as yyyy-MM-dd
+     * @param viewer        the user asking; decides whether owners are masked
      * @return one line per booking, sorted by date then start time, or a single
-     *         "no booking" line when the week is empty.
-     * @throws CrobsException.NotFoundException when the room does not exist.
-     * @throws CrobsException.MalformedCommandException for a bad start date.
+     *         "no booking" line when the week is empty
+     * @throws CrobsException.NotFoundException      when the room does not exist
+     * @throws CrobsException.MalformedCommandException for a bad start date
      */
     public List<String> week(String roomId, String weekStartDate, User viewer) {
         Room room = rooms.get(roomId);
@@ -38,7 +47,7 @@ public class ScheduleView {
                     String.format(CrobsMessages.UNKNOWN_ROOM, roomId));
         }
         LocalDate start = DateFormats.parseDate(weekStartDate);
-        LocalDate end = DateFormats.sevenDaysFrom(start).get(6);
+        LocalDate end = DateFormats.weekEnd(start);
         boolean admin = Permission.isAdmin(viewer);
 
         List<Booking> inWeek = new ArrayList<>();

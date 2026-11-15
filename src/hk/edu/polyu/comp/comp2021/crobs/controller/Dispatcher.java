@@ -16,13 +16,25 @@ public class Dispatcher {
     private final View view;
     private int counter;
 
+    /**
+     * Creates the dispatcher.
+     *
+     * @param parser turns a raw line into a command
+     * @param logger records every line (REQ1)
+     * @param view   prints the result of a command
+     */
     public Dispatcher(CommandParser parser, OperationLogger logger, View view) {
         this.parser = parser;
         this.logger = logger;
         this.view = view;
     }
 
-    /** Returns false when the session should end (quit). */
+    /**
+     * Executes one input line.
+     *
+     * @param line the raw line typed by the user
+     * @return false when the session should end (quit), true otherwise
+     */
     public boolean dispatch(String line) {
         if (line == null || line.trim().isEmpty()) {
             return true;

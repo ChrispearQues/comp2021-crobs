@@ -13,13 +13,21 @@ public class BookingListView {
 
     private final Collection<Booking> bookings;
 
+    /**
+     * Creates a view over a snapshot of the current bookings.
+     *
+     * @param bookings the bookings to filter
+     */
     public BookingListView(Collection<Booking> bookings) {
         this.bookings = bookings;
     }
 
     /**
+     * Lists the bookings owned by one user.
+     *
+     * @param owner the logged-in user
      * @return one line per booking of {@code owner}, sorted by date then start
-     *         time, or a single "no booking" line when the user has none.
+     *         time, or a single "no booking" line when the user has none
      */
     public List<String> of(User owner) {
         List<Booking> mine = new ArrayList<>();

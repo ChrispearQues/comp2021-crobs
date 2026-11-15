@@ -14,11 +14,22 @@ public class TxtLogger implements OperationLogger {
     private final Path file;
     private final List<String> lines = new ArrayList<>();
 
+    /**
+     * Creates the logger and empties the file.
+     *
+     * @param file the text file to write
+     */
     public TxtLogger(Path file) {
         this.file = file;
         write();
     }
 
+    /**
+     * Appends one command.
+     *
+     * @param index   the position of the command in the session, starting at 1
+     * @param command the text that the user typed
+     */
     @Override
     public void log(int index, String command) {
         lines.add(command);

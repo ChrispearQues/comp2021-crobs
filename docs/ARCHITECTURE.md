@@ -138,7 +138,30 @@ java -cp out hk.edu.polyu.comp.comp2021.crobs.Application -html log.html -txt lo
 
 SDK: JDK 25, language level 8 (no `var`, no `List.of`, no text blocks).
 
-## 8. Ownership
+## 8. Code inspection (20 points)
+
+The official ruleset is committed as `.idea/inspectionProfiles/COMP2021_PROJECT.xml`
+and `profiles_settings.xml` selects it, so a clone of this repository opens in
+IntelliJ IDEA with the course profile already active. To check it manually:
+
+```
+Settings | Editor | Inspections | gear | Import Profile... | COMP2021_PROJECT.xml
+Analyze | Inspect Code | Whole project
+```
+
+Only the rule's **errors** cost points (1 each), never the warnings. The rules
+that the code is written to satisfy:
+
+| Rule | What it means here |
+|---|---|
+| `JavaDoc` | every class, field and method visible outside the class needs Javadoc, and methods need `@param` / `@return` |
+| `MagicNumber` | no literal above 2 outside a constant; `IdGenerator` and `DateFormats` derive theirs (`DayOfWeek.values().length`) |
+| `UnusedImport`, `MissingOverrideAnnotation`, `PackageVisibleField`, `PublicField` | no unused import, `@Override` everywhere, no non-private field without a modifier, only `static final` constants are public |
+| `EmptyCatchBlock`, `EmptyClass`, `ReturnFromFinallyBlock`, ... | no empty or dead control structures |
+
+Unit tests are not inspected, so the test sources may use literal dates freely.
+
+## 9. Ownership
 
 | Member | Package | REQ |
 |---|---|---|

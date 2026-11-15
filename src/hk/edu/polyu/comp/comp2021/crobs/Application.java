@@ -25,10 +25,17 @@ public class Application {
 
     private static final String HTML_LOG = "-html";
     private static final String TXT_LOG = "-txt";
+    private static final String DEFAULT_HTML_LOG = "log.html";
+    private static final String DEFAULT_TXT_LOG = "log.txt";
 
+    /**
+     * Starts the command line interface.
+     *
+     * @param args "-html &lt;file&gt;" and "-txt &lt;file&gt;", both optional
+     */
     public static void main(String[] args) {
-        Path htmlFile = Paths.get("log.html");
-        Path txtFile = Paths.get("log.txt");
+        Path htmlFile = Paths.get(DEFAULT_HTML_LOG);
+        Path txtFile = Paths.get(DEFAULT_TXT_LOG);
         for (int i = 0; i + 1 < args.length; i += 2) {
             if (HTML_LOG.equals(args[i])) {
                 htmlFile = Paths.get(args[i + 1]);

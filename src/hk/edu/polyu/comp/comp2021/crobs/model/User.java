@@ -7,17 +7,32 @@ public class User {
     private String name;
     private Role role;
 
+    /**
+     * Creates a user.
+     *
+     * @param id   the unique user ID
+     * @param name the full name of the user
+     * @param role the access level of the user
+     */
     public User(String id, String name, Role role) {
         this.id = id;
         this.name = name;
         this.role = role;
     }
 
+    /** @return the unique user ID */
     public String getId() { return id; }
 
+    /** @return the full name of the user */
     public String getName() { return name; }
 
+    /** @return the access level of the user */
     public Role getRole() { return role; }
 
+    /**
+     * Changes the access level of the user (REQ4).
+     *
+     * @param role the new access level
+     */
     public void setRole(Role role) { this.role = role; }
 }
