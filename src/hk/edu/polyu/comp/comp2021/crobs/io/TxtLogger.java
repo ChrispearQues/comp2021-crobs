@@ -8,7 +8,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-/** REQ1: writes one command per line, in execution order. */
+/** REQ1: writes one numbered line per command, in execution order. */
 public class TxtLogger implements OperationLogger {
 
     private final Path file;
@@ -25,14 +25,15 @@ public class TxtLogger implements OperationLogger {
     }
 
     /**
-     * Appends one command.
+     * Appends one command, prefixed with its position so that the log reads as a
+     * numbered list (REQ1).
      *
      * @param index   the position of the command in the session, starting at 1
      * @param command the text that the user typed
      */
     @Override
     public void log(int index, String command) {
-        lines.add(command);
+        lines.add(index + " " + command);
         write();
     }
 

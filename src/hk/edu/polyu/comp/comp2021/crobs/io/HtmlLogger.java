@@ -8,7 +8,12 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-/** REQ1: writes an HTML table with two columns: index and command. */
+/**
+ * REQ1: writes an HTML table with two columns, index and command.
+ *
+ * <p>The whole document is rewritten on every line, so the file is a valid,
+ * closed table at any moment, even if the process dies mid-session.</p>
+ */
 public class HtmlLogger implements OperationLogger {
 
     private static final String HEADER = "<!DOCTYPE html>\n"
@@ -65,7 +70,17 @@ public class HtmlLogger implements OperationLogger {
         }
     }
 
-    private static String escape(String text) {
-        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    /**
+     * Escapes the four HTML metacharacters, so that a command containing
+     * {@code <}, {@code >}, {@code &} or {@code "} cannot break the table (REQ1).
+     *
+     * @param text the raw command
+     * @return the same text, safe to put inside a table cell
+     */
+    static String escape(String text) {
+        return text.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;");
     }
 }

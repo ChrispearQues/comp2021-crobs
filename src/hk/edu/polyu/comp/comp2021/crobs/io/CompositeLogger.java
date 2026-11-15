@@ -29,4 +29,25 @@ public class CompositeLogger implements OperationLogger {
             logger.log(index, command);
         }
     }
+
+    /**
+     * Closes every logger, even when an earlier one fails, so that no file stays
+     * half-open. The first failure is reported after the others are released.
+     */
+    @Override
+    public void close() {
+        RuntimeException first = null;
+        for (OperationLogger logger : loggers) {
+            try {
+                logger.close();
+            } catch (RuntimeException e) {
+                if (first == null) {
+                    first = e;
+                }
+            }
+        }
+        if (first != null) {
+            throw first;
+        }
+    }
 }
