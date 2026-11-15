@@ -15,8 +15,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /** REQ1: the TXT and HTML command logs. */
 class LoggerTest {
 
+    /** Reads a log back as text, with any platform line separator normalised to {@code \n}. */
     private static String read(Path file) throws IOException {
-        return Files.readString(file, StandardCharsets.UTF_8);
+        return Files.readString(file, StandardCharsets.UTF_8).replace("\r\n", "\n");
     }
 
     // --- TXT -------------------------------------------------------------
@@ -40,8 +41,12 @@ class LoggerTest {
 
         TxtLogger logger = new TxtLogger(file);
 
-        assertEquals("", read(file));
+        // Truncation happens when the file is opened, not when the first line is written.
+        assertEquals(0L, Files.size(file), "the previous content must be gone as soon as the log opens");
+        logger.log(1, "quit");
         logger.close();
+
+        assertEquals("1 quit\n", read(file));
     }
 
     @Test
@@ -108,7 +113,7 @@ class LoggerTest {
         logger.log(1, "quit");
         logger.close();
 
-        assertEquals("1 quit\n", read(txt));
-        assertTrue(read(html).contains("<td>quit</td>"));
+        assertEquals("1 quit\n", read(txt), "TXT log: " + txt);
+        assertTrue(read(html).contains("<td>quit</td>"), "HTML log: " + html);
     }
 }
