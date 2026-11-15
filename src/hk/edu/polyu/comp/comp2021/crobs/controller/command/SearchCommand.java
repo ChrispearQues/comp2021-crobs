@@ -13,7 +13,8 @@ public class SearchCommand implements Command {
     private final String minCapacity;
     private final String features;
 
-    public SearchCommand(CROBS crobs, String date, String startTime, String endTime, String minCapacity, String features) {
+    public SearchCommand(CROBS crobs, String date, String startTime, String endTime,
+                         String minCapacity, String features) {
         this.crobs = crobs;
         this.date = date;
         this.startTime = startTime;
@@ -24,7 +25,10 @@ public class SearchCommand implements Command {
 
     @Override
     public String execute() {
-        // TODO(REQ13)
-        throw new UnsupportedOperationException("TODO: SearchCommand.execute");
+        return join(crobs.search(date, startTime, endTime, minCapacity, features));
+    }
+
+    private static String join(java.util.List<String> lines) {
+        return lines.isEmpty() ? "(no matching rooms)" : String.join("\n", lines);
     }
 }

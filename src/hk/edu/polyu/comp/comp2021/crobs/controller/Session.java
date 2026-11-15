@@ -1,15 +1,21 @@
 package hk.edu.polyu.comp.comp2021.crobs.controller;
 
+import hk.edu.polyu.comp.comp2021.crobs.model.CROBS;
 import hk.edu.polyu.comp.comp2021.crobs.model.User;
 
-/** Holds the currently logged-in user. No user is logged in when a session starts. */
+/**
+ * Thin view of the login state. The user object itself lives in {@link CROBS}
+ * (single source of truth); this class must never keep a second copy.
+ */
 public class Session {
 
-    private User currentUser;
+    private final CROBS crobs;
 
-    public User getCurrentUser() { return currentUser; }
+    public Session(CROBS crobs) {
+        this.crobs = crobs;
+    }
 
-    public void setCurrentUser(User currentUser) { this.currentUser = currentUser; }
+    public User getCurrentUser() { return crobs.getCurrentUser(); }
 
-    public boolean isLoggedIn() { return currentUser != null; }
+    public boolean isLoggedIn() { return crobs.getCurrentUser() != null; }
 }
