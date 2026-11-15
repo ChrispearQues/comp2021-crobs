@@ -41,7 +41,7 @@ public class ScheduleView {
      * @throws CrobsException.MalformedCommandException for a bad start date
      */
     public List<String> week(String roomId, String weekStartDate, User viewer) {
-        Room room = rooms.get(roomId);
+        Room room = findRoom(roomId);
         if (room == null) {
             throw new CrobsException.NotFoundException(
                     String.format(CrobsMessages.UNKNOWN_ROOM, roomId));
@@ -72,6 +72,27 @@ public class ScheduleView {
             lines.add(CrobsMessages.NO_BOOKING_IN_WEEK);
         }
         return lines;
+    }
+
+    /**
+     * Finds a room whatever the case of the ID, so that {@code schedule r001}
+     * and {@code listRoom r001} answer the same thing. The room map is small,
+     * so the case-insensitive scan is not a concern.
+     *
+     * @param roomId the ID as it was typed
+     * @return the room, or null when no room has that ID
+     */
+    private Room findRoom(String roomId) {
+        Room exact = rooms.get(roomId);
+        if (exact != null) {
+            return exact;
+        }
+        for (Map.Entry<String, Room> entry : rooms.entrySet()) {
+            if (entry.getKey().equalsIgnoreCase(roomId)) {
+                return entry.getValue();
+            }
+        }
+        return null;
     }
 
     private static String visibleOwner(Booking booking, User viewer, boolean admin) {
