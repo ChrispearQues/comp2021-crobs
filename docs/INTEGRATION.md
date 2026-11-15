@@ -27,9 +27,9 @@ Facts that follow from this table:
 * C never delivered: the REQ10-REQ12 code in this branch (booking rules in
   `CROBS`, `Booking`, `TimeSlot`) is D's implementation. It must not be
   presented as C's work at the design review.
-* B's `User` work survives verbatim — see §3.
+* B's `User` work survives verbatim — see §2.
 
-## 2. Now same package, one author each
+## 2. Who owns which file
 
 | File | Primary author (current content) | Notes |
 |---|---|---|
@@ -63,7 +63,7 @@ Facts that follow from this table:
 | **Command words** | case-insensitive (`LOGIN`) | case-sensitive | **A's** (`Locale.ROOT`) |
 | **Error wording** | ad-hoc strings in the parser | every string in `CrobsMessages` | **D's** |
 | **Login state** | `controller/Session` wrapper over `CROBS` | `CROBS.currentUser` only (`Session` deleted) | **D's** — one source of truth; A's wrapper is not resurrected |
-| **REQ4/5/6 rules** | stricter: login is refused while somebody is logged in, `logout` without login is an error, "cannot promote to superadmin" | permissive: a `login` may switch user, `logout` without login is a no-op, `parseRole` only accepts `admin`/`regular` | **D's**, because its tests state these as intended behaviour; A's variant is kept on `feat/module-a` (§6, item 1) |
+| **REQ4/5/6 rules** | stricter: login is refused while somebody is logged in, `logout` without login is an error, "cannot promote to superadmin" | permissive: a `login` may switch user, `logout` without login is a no-op, `parseRole` only accepts `admin`/`regular` | **D's**, because its tests state these as intended behaviour; A's variant is kept on `feat/module-a` (§6, item 3) |
 
 ## 4. Defects that module A's tests found in module D's code
 
@@ -73,17 +73,17 @@ the ported A test that catches it, and the fix.
 
 | # | File | Defect / baseline behaviour | Test (from A) | Fix |
 |---|---|---|---|---|
-| 1 | `io/TxtLogger` | the log line is the bare command — `quit` instead of `1 quit`; REQ1 numbering lost | `txtLoggerWritesOneNumberedLinePerCommand` | `72f4c71` |
-| 2 | `io/HtmlLogger` | `escape` leaves `"` raw, so `addUser "A & B"` puts an unescaped quote inside `<td>` | `htmlLoggerEscapesHtmlMetacharacters` | `72f4c71` |
-| 3 | `io/OperationLogger` | no `close()`; loggers can never be flushed or closed, and a failing close cannot be reported | `compositeLoggerFansOutToEveryLogger`, `htmlLoggerCloseIsIdempotent` | `72f4c71` |
-| 4 | `Application` | `-txt` with no file name is silently ignored: exit **0**, and the run still writes the default `log.txt` + `log.html` | `rejectsAMissingFileName` | `62ef941` |
-| 5 | `Application` | unknown option (`-foo bar`) is silently ignored: exit **0** | `rejectsAnUnknownOption` | `62ef941` |
-| 6 | `Application` | `-txt <directory>` dumps `UncheckedIOException` + stack trace on stderr | CLI check (§5) | `62ef941` |
-| 7 | `Application` | `-txt x -html ./x` is accepted (exit 0) and the two writers destroy the file — the result was plain text with the HTML table gone | `rejectsTheSameFileForBothLogs`, `rejectsTheSameFileWrittenInTwoSpellings` | `62ef941` |
-| 8 | `Application` | `-txt only.txt` also creates an unsolicited `log.html` | CLI check (§5) | `62ef941` |
-| 9 | `CommandParser` | no tokenizer, so a quoted purpose (`book ... "Group meeting"`) is split and rejected as 7 arguments | `tokenizerKeepsQuotedArgumentTogether`, `quotedPurposeCountsAsOneArgument` | `9e15fbc` |
-| 10 | `CommandParser` | an unterminated quote is not detected (no tokenizer existed) | `tokenizerRejectsAnUnterminatedQuote` | `9e15fbc` |
-| 11 | `CommandParser` | command words are case-sensitive (`LOGIN U000` → unknown command) | `commandNamesAreCaseInsensitive` | `9e15fbc` |
+| 1 | `io/TxtLogger` | the log line is the bare command — `quit` instead of `1 quit`; REQ1 numbering lost | `txtLoggerWritesOneNumberedLinePerCommand` | `ef4b5b7` |
+| 2 | `io/HtmlLogger` | `escape` leaves `"` raw, so `addUser "A & B"` puts an unescaped quote inside `<td>` | `htmlLoggerEscapesHtmlMetacharacters` | `ef4b5b7` |
+| 3 | `io/OperationLogger` | no `close()`; loggers can never be flushed or closed, and a failing close cannot be reported | `compositeLoggerFansOutToEveryLogger`, `htmlLoggerCloseIsIdempotent` | `ef4b5b7` |
+| 4 | `Application` | `-txt` with no file name is silently ignored: exit **0**, and the run still writes the default `log.txt` + `log.html` | `rejectsAMissingFileName` | `4588eb7` |
+| 5 | `Application` | unknown option (`-foo bar`) is silently ignored: exit **0** | `rejectsAnUnknownOption` | `4588eb7` |
+| 6 | `Application` | `-txt <directory>` dumps `UncheckedIOException` + stack trace on stderr | CLI check (§5) | `4588eb7` |
+| 7 | `Application` | `-txt x -html ./x` is accepted (exit 0) and the two writers destroy the file — the result was plain text with the HTML table gone | `rejectsTheSameFileForBothLogs`, `rejectsTheSameFileWrittenInTwoSpellings` | `4588eb7` |
+| 8 | `Application` | `-txt only.txt` also creates an unsolicited `log.html` | CLI check (§5) | `4588eb7` |
+| 9 | `CommandParser` | no tokenizer, so a quoted purpose (`book ... "Group meeting"`) is split and rejected as 7 arguments | `tokenizerKeepsQuotedArgumentTogether`, `quotedPurposeCountsAsOneArgument` | `bf6be73` |
+| 10 | `CommandParser` | an unterminated quote is not detected (no tokenizer existed) | `tokenizerRejectsAnUnterminatedQuote` | `bf6be73` |
+| 11 | `CommandParser` | command words are case-sensitive (`LOGIN U000` → unknown command) | `commandNamesAreCaseInsensitive` | `bf6be73` |
 
 Three A assertions were **not** forced onto D's design; the tests were adapted
 and the reason is a comment in the test:
@@ -95,10 +95,11 @@ and the reason is a comment in the test:
 * `List.of` was replaced with `Arrays.asList` because the project compiles at
   language level 8 (see §6, item 4).
 
-Two A tests were extended (a dangling `-html` after a complete `-txt`; the same
-file spelled `logs/../out.log` vs `out.log`) and one test was added
-(`unquotedTailStillCountsAsOneArgument`) so that D's tail semantics cannot
-regress while A's tokenizer is in place.
+Two A tests were extended with extra assertions (a dangling `-html` after a
+complete `-txt`; a null input line) and two were added: the same file spelled
+`logs/../out.log` vs `out.log`, and `unquotedTailStillCountsAsOneArgument` so
+that D's tail semantics cannot regress while A's tokenizer is in place. That
+is how A's 23 tests become 25 here (149 + 25 = 174).
 
 ## 5. Test suite and verification
 
