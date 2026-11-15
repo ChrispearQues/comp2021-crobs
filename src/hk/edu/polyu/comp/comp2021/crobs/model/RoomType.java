@@ -13,9 +13,14 @@ public enum RoomType {
 
     public String getLabel() { return label; }
 
-    /** @throws CrobsException if the label is not a supported room type. */
+    /** @throws CrobsException.MalformedCommandException if the label is not a supported room type. */
     public static RoomType fromLabel(String label) {
-        // TODO(REQ7): map label back to the enum constant
-        throw new UnsupportedOperationException("TODO: RoomType.fromLabel");
+        for (RoomType type : values()) {
+            if (type.label.equalsIgnoreCase(label)) {
+                return type;
+            }
+        }
+        throw new CrobsException.MalformedCommandException(
+                String.format(CrobsMessages.INVALID_ROOM_TYPE, label));
     }
 }

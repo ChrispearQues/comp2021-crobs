@@ -24,7 +24,6 @@ public class BookCommand implements Command {
 
     @Override
     public String execute() {
-        // TODO(REQ10)
-        throw new UnsupportedOperationException("TODO: BookCommand.execute");
+        return crobs.book(roomId, date, startTime, endTime, purpose);
     }
 }

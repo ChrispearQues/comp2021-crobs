@@ -2,6 +2,7 @@ package hk.edu.polyu.comp.comp2021.crobs.controller.command;
 
 import hk.edu.polyu.comp.comp2021.crobs.controller.Command;
 import hk.edu.polyu.comp.comp2021.crobs.model.CROBS;
+import hk.edu.polyu.comp.comp2021.crobs.model.CrobsMessages;
 
 /** REQ9 */
 public class DeleteRoomCommand implements Command {
@@ -16,7 +17,7 @@ public class DeleteRoomCommand implements Command {
 
     @Override
     public String execute() {
-        // TODO(REQ9)
-        throw new UnsupportedOperationException("TODO: DeleteRoomCommand.execute");
+        crobs.deleteRoom(roomId);
+        return CrobsMessages.DONE;
     }
 }

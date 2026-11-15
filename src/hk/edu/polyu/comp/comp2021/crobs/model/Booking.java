@@ -1,5 +1,7 @@
 package hk.edu.polyu.comp.comp2021.crobs.model;
 
+import java.util.Comparator;
+
 /** A reservation of one room by one user. */
 public class Booking {
 
@@ -29,7 +31,29 @@ public class Booking {
 
     /** REQ11: update room, date, start, end and purpose. ID and owner never change. */
     public void modify(String roomId, TimeSlot timeSlot, String purpose) {
-        // TODO(REQ11)
-        throw new UnsupportedOperationException("TODO: Booking.modify");
+        this.roomId = roomId;
+        this.timeSlot = timeSlot;
+        this.purpose = purpose;
+    }
+
+    /** "B003 2026-11-16 09:00-11:00 U002 group meeting" (REQ14). */
+    public String describeWithUser(String userText) {
+        return id + " " + timeSlot + " " + userText + " " + purpose;
+    }
+
+    /** "B003 R002 2026-11-16 09:00-11:00 group meeting" (REQ17). */
+    public String describeWithRoom() {
+        return id + " " + roomId + " " + timeSlot + " " + purpose;
+    }
+
+    /**
+     * Date, then start time, then ID. The ID is the final tie-breaker so that
+     * the output of REQ14 / REQ17 is stable and reproducible.
+     */
+    public static Comparator<Booking> chronological() {
+        return Comparator
+                .comparing((Booking booking) -> booking.timeSlot.getDate())
+                .thenComparing(booking -> booking.timeSlot.getStartTime())
+                .thenComparing(booking -> booking.id);
     }
 }

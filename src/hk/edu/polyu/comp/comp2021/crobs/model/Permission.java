@@ -5,18 +5,31 @@ public final class Permission {
 
     private Permission() { }
 
+    /** @throws CrobsException.PermissionDeniedException when nobody is logged in. */
     public static void requireLogin(User user) {
-        // TODO: throw PermissionDeniedException when user == null
-        throw new UnsupportedOperationException("TODO: Permission.requireLogin");
+        if (user == null) {
+            throw new CrobsException.PermissionDeniedException(CrobsMessages.NOT_LOGGED_IN);
+        }
     }
 
+    /** @throws CrobsException.PermissionDeniedException unless the user is an admin or the superadmin. */
     public static void requireAdmin(User user) {
-        // TODO: requireLogin, then SUPERADMIN or ADMIN
-        throw new UnsupportedOperationException("TODO: Permission.requireAdmin");
+        requireLogin(user);
+        if (!isAdmin(user)) {
+            throw new CrobsException.PermissionDeniedException(CrobsMessages.ADMIN_ONLY);
+        }
     }
 
+    /** @throws CrobsException.PermissionDeniedException unless the user is the superadmin. */
     public static void requireSuperAdmin(User user) {
-        // TODO: requireLogin, then SUPERADMIN only
-        throw new UnsupportedOperationException("TODO: Permission.requireSuperAdmin");
+        requireLogin(user);
+        if (user.getRole() != Role.SUPERADMIN) {
+            throw new CrobsException.PermissionDeniedException(CrobsMessages.SUPERADMIN_ONLY);
+        }
+    }
+
+    /** The superadmin is an admin too. */
+    public static boolean isAdmin(User user) {
+        return user != null && (user.getRole() == Role.ADMIN || user.getRole() == Role.SUPERADMIN);
     }
 }

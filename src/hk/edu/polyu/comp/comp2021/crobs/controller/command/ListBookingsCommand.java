@@ -8,15 +8,12 @@ public class ListBookingsCommand implements Command {
 
     private final CROBS crobs;
 
-
     public ListBookingsCommand(CROBS crobs) {
         this.crobs = crobs;
-
     }
 
     @Override
     public String execute() {
-        // TODO(REQ17)
-        throw new UnsupportedOperationException("TODO: ListBookingsCommand.execute");
+        return String.join("\n", crobs.listBookings());
     }
 }

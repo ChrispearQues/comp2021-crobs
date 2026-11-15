@@ -2,6 +2,7 @@ package hk.edu.polyu.comp.comp2021.crobs.controller.command;
 
 import hk.edu.polyu.comp.comp2021.crobs.controller.Command;
 import hk.edu.polyu.comp.comp2021.crobs.model.CROBS;
+import hk.edu.polyu.comp.comp2021.crobs.model.CrobsMessages;
 
 /** REQ4 */
 public class ChangeRoleCommand implements Command {
@@ -18,7 +19,7 @@ public class ChangeRoleCommand implements Command {
 
     @Override
     public String execute() {
-        // TODO(REQ4)
-        throw new UnsupportedOperationException("TODO: ChangeRoleCommand.execute");
+        crobs.changeRole(userId, newRole);
+        return CrobsMessages.DONE;
     }
 }

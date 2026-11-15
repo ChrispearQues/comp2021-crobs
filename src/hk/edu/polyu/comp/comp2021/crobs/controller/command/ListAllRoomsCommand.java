@@ -8,15 +8,12 @@ public class ListAllRoomsCommand implements Command {
 
     private final CROBS crobs;
 
-
     public ListAllRoomsCommand(CROBS crobs) {
         this.crobs = crobs;
-
     }
 
     @Override
     public String execute() {
-        // TODO(REQ16)
-        throw new UnsupportedOperationException("TODO: ListAllRoomsCommand.execute");
+        return String.join("\n", crobs.listAllRooms());
     }
 }

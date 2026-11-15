@@ -13,8 +13,10 @@ public class IdGenerator {
         this.counter = start;
     }
 
+    /** Next ID, e.g. {@code U001}, {@code U002} ... */
     public String next() {
-        // TODO: format as prefix + zero-padded counter, then increment
-        throw new UnsupportedOperationException("TODO: IdGenerator.next");
+        String id = prefix + String.format("%03d", counter);
+        counter++;
+        return id;
     }
 }

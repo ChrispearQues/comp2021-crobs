@@ -2,6 +2,7 @@ package hk.edu.polyu.comp.comp2021.crobs.controller.command;
 
 import hk.edu.polyu.comp.comp2021.crobs.controller.Command;
 import hk.edu.polyu.comp.comp2021.crobs.model.CROBS;
+import hk.edu.polyu.comp.comp2021.crobs.model.CrobsMessages;
 
 /** REQ3 */
 public class RemoveUserCommand implements Command {
@@ -16,7 +17,7 @@ public class RemoveUserCommand implements Command {
 
     @Override
     public String execute() {
-        // TODO(REQ3)
-        throw new UnsupportedOperationException("TODO: RemoveUserCommand.execute");
+        crobs.removeUser(userId);
+        return CrobsMessages.DONE;
     }
 }

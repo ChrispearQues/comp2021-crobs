@@ -1,70 +1,54 @@
-# Crobs — 代码结构约定
+# Crobs — Code Structure
 
-> 目标：四个人并行开发不打架。任何与本文件冲突的实现，以本文件为准；要改先提 PR 改本文件。
+> Goal: four people can work in parallel without breaking each other. If an
+> implementation contradicts this document, this document wins; change it with a
+> pull request first.
 
-## 1. 目录结构
+## 1. Directory layout
 
 ```
 src/hk/edu/polyu/comp/comp2021/crobs/
-├── Application.java                  程序入口：读 -html/-txt 参数、装配、主循环
+├── Application.java                   entry point: -html/-txt arguments, wiring, command loop
 ├── view/
-│   ├── View.java                     输出接口（print / printError）
-│   └── ConsoleView.java              只做 System.out / System.in
+│   ├── View.java                      output interface (print / printError)
+│   └── ConsoleView.java               System.out only
 ├── controller/
-│   ├── CommandParser.java            String → Command；只做切分与格式校验
-│   ├── Command.java                  接口：execute() / undo() / isUndoable()
-│   ├── Dispatcher.java               统一入口：权限 → execute → 日志（REQ1）
-│   ├── Session.java                  当前登录用户（null = 未登录）
-│   └── command/                      每条命令一个类
-│       ├── LoginCommand.java          REQ5
-│       ├── LogoutCommand.java         REQ6
-│       ├── QuitCommand.java           REQ18
-│       ├── AddUserCommand.java        REQ2
-│       ├── RemoveUserCommand.java     REQ3
-│       ├── ChangeRoleCommand.java     REQ4
-│       ├── AddRoomCommand.java        REQ7
-│       ├── ModifyRoomCommand.java     REQ8
-│       ├── DeleteRoomCommand.java     REQ9
-│       ├── ListRoomCommand.java       REQ15
-│       ├── ListAllRoomsCommand.java   REQ16
-│       ├── BookCommand.java           REQ10
-│       ├── ModifyBookingCommand.java  REQ11
-│       ├── DeleteBookingCommand.java  REQ12
-│       ├── ListBookingsCommand.java   REQ17
-│       ├── SearchCommand.java         REQ13
-│       └── ScheduleCommand.java       REQ14
+│   ├── Command.java                   interface: execute()
+│   ├── CommandParser.java             String -> Command; syntax only
+│   ├── Dispatcher.java                single entry point: log -> parse -> execute -> print
+│   └── command/                       one class per REQ (18 classes)
 ├── io/
-│   ├── OperationLogger.java          接口：log(int index, String command)
-│   ├── HtmlLogger.java               REQ1：HTML 表格
-│   ├── TxtLogger.java                REQ1：逐行文本
-│   └── CompositeLogger.java          同时写两份
-└── model/                            ★ coverage 只统计这个包
-    ├── CROBS.java                    门面：全部业务方法 + 权限判定
-    ├── User.java                     id, name, role
-    ├── Role.java                     enum SUPERADMIN / ADMIN / REGULAR
-    ├── Room.java                     id, type, capacity, features
-    ├── RoomType.java                 enum lectureTheatre / computerLab / seminarRoom / meetingRoom
-    ├── Booking.java                  id, userId, roomId, date, start, end, purpose
-    ├── TimeSlot.java                 date + start/end；overlaps(TimeSlot)
-    ├── IdGenerator.java              唯一 ID（用户 / 房间 / 预约各一套前缀）
-    ├── Permission.java               权限判定集中处（谁能执行哪类操作）
-    └── CrobsException.java           基类 + 四个子类：
-                                      PermissionDeniedException
-                                      NotFoundException
-                                      ConflictException
-                                      MalformedCommandException
+│   ├── OperationLogger.java           interface: log(int index, String command)
+│   ├── HtmlLogger.java                REQ1: two-column HTML table
+│   ├── TxtLogger.java                 REQ1: one command per line
+│   └── CompositeLogger.java           writes both files
+└── model/                             ★ line coverage is measured on this package only
+    ├── CROBS.java                     facade: all business methods + the logged-in user
+    ├── User.java                      id, name, role
+    ├── Role.java                      enum SUPERADMIN / ADMIN / REGULAR
+    ├── Room.java                      id, type, capacity, features + feature parsing
+    ├── RoomType.java                  enum lectureTheatre / computerLab / seminarRoom / meetingRoom
+    ├── Booking.java                   id, userId, roomId, timeSlot, purpose + ordering
+    ├── TimeSlot.java                  date + start/end; overlaps(TimeSlot)
+    ├── IdGenerator.java               unique IDs (U / R / B prefixes)
+    ├── Permission.java                every role check
+    ├── DateFormats.java               strict yyyy-MM-dd and HH:mm parsing
+    ├── RoomSearch.java                REQ13 filter chain
+    ├── ScheduleView.java              REQ14 weekly view + user masking
+    ├── BookingListView.java           REQ17 "my bookings"
+    ├── CrobsMessages.java             every user-facing string
+    └── CrobsException.java            base class + PermissionDenied / NotFound /
+                                       Conflict / MalformedCommand
 
 test/hk/edu/polyu/comp/comp2021/crobs/model/
-├── CROBSTest.java                    按命令逐一测
-├── UserTest.java / RoomTest.java / BookingTest.java
-├── TimeSlotTest.java                 重叠边界（端点相接不算冲突）
-├── IdGeneratorTest.java
-└── PermissionTest.java
+├── CROBSTest.java                     every REQ through the facade
+├── RoomSearchTest.java / ScheduleViewTest.java / BookingListViewTest.java
+├── DateFormatsTest.java               leap day, 24:00, 9:00 ...
+├── RoomTest.java / RoomTypeTest.java / BookingTest.java / TimeSlotTest.java
+├── IdGeneratorTest.java / PermissionTest.java
 ```
 
-约 35 个源文件。`controller/command` 里每个类 30–60 行，不要写业务判断。
-
-## 2. 依赖方向（单向，不许反向）
+## 2. Dependency direction (one way only)
 
 ```
 view  ←  controller  ←  Application
@@ -72,44 +56,93 @@ view  ←  controller  ←  Application
            model
 ```
 
-- `model` **不得** import `view` / `controller` / `io`（model 是纯业务）
-- `controller` 只调 `model` 的公开方法，不直接操作集合
-- `view` 只接收要打印的字符串，不做判断
-- 唯一例外：`Application` 可以 import 所有层（它是装配器）
+- `model` never imports `view`, `controller` or `io`.
+- `controller` calls `model` public methods only; it never touches collections.
+- `view` receives ready-to-print strings and prints them; it makes no decisions.
+- The only exception is `Application`, which assembles all layers.
 
-## 3. CROBS 门面方法（11/8 冻结，改动需通知全员）
+## 3. Login state
 
-| 方法 | 对应 REQ | 抛出的异常 |
+There is exactly one place that knows who is logged in: `CROBS.currentUser`
+(`null` = nobody). Permissions are checked inside the `model` so that they are
+covered by the unit tests. The controller never inspects a role.
+
+## 4. The `CROBS` facade
+
+| Method | REQ | Returns | Throws |
+|---|---|---|---|
+| `login(String userId)` | 5 | — | NotFound, Malformed |
+| `logout()` | 6 | — | — |
+| `addUser(String name)` | 2 | `User U002 created.` | PermissionDenied, Malformed |
+| `removeUser(String userId)` | 3 | — | PermissionDenied, NotFound |
+| `changeRole(String userId, String role)` | 4 | — | PermissionDenied, NotFound, Malformed |
+| `addRoom(String type, String capacity, String features)` | 7 | `Room R001 created.` | PermissionDenied, Malformed |
+| `modifyRoom(String roomId, String field, String value)` | 8 | — | PermissionDenied, NotFound, Malformed |
+| `deleteRoom(String roomId)` | 9 | — | PermissionDenied, NotFound |
+| `book(String roomId, String date, String start, String end, String purpose)` | 10 | `Booking B001 created.` | PermissionDenied, Conflict, NotFound, Malformed |
+| `modifyBooking(String bookingId, ...)` | 11 | — | PermissionDenied, Conflict, NotFound, Malformed |
+| `deleteBooking(String bookingId)` | 12 | — | PermissionDenied, NotFound |
+| `search(String date, String start, String end, String minCapacity, String features)` | 13 | `List<String>` | PermissionDenied, Malformed |
+| `schedule(String roomId, String weekStartDate)` | 14 | `List<String>` | PermissionDenied, NotFound, Malformed |
+| `listRoom(String roomId)` | 15 | one line | PermissionDenied, NotFound |
+| `listAllRooms()` | 16 | `List<String>` | PermissionDenied |
+| `listBookings()` | 17 | `List<String>` | PermissionDenied |
+
+All formatting lives in the model, so the CLI and a future GUI print the same
+text. Methods that return `void` are silent on success; the command object adds
+a fixed confirmation line from `CrobsMessages`.
+
+## 5. Output format
+
+```
+search 2026-11-16 09:00 11:00 30 projector
+R002 computerLab 40 projector,whiteboard
+
+schedule R002 2026-11-16            (regular user)
+B003 2026-11-16 09:00-11:00 *** group meeting
+
+schedule R002 2026-11-16            (admin)
+B003 2026-11-16 09:00-11:00 U002 group meeting
+
+listBookings
+B003 R002 2026-11-16 09:00-11:00 group meeting
+```
+
+- `bookingId [roomId] date startTime-endTime [userId] purpose`
+- `roomId` appears in `listBookings` but not in `schedule` (the command already
+  names the room).
+- `***` replaces a user ID that a regular user is not allowed to see.
+
+## 6. Three rules
+
+1. **Business decisions live in `model`.** An `if (user.getRole() == ...)` inside
+   `controller` is in the wrong place: it cannot be tested and it costs coverage.
+2. **Every command goes through `Dispatcher`.** REQ1 logging is written there and
+   nowhere else.
+3. **Exceptions are not swallowed.** The model throws `CrobsException`
+   subclasses; `Dispatcher` turns them into a printable message.
+
+## 7. Build and test
+
+```bash
+# compile
+javac -d out $(find src -name "*.java")
+
+# tests (JUnit 5 in lib/)
+java -jar junit-platform-console-standalone.jar \
+     execute --class-path "out:out-test" --scan-class-path
+
+# run
+java -cp out hk.edu.polyu.comp.comp2021.crobs.Application -html log.html -txt log.txt
+```
+
+SDK: JDK 25, language level 8 (no `var`, no `List.of`, no text blocks).
+
+## 8. Ownership
+
+| Member | Package | REQ |
 |---|---|---|
-| `login(String userId)` | REQ5 | NotFound |
-| `logout()` | REQ6 | — |
-| `addUser(String name)` | REQ2 | PermissionDenied |
-| `removeUser(String userId)` | REQ3 | PermissionDenied, NotFound |
-| `changeRole(String userId, String role)` | REQ4 | PermissionDenied, NotFound, Malformed |
-| `addRoom(String type, int capacity, String features)` | REQ7 | PermissionDenied, Malformed |
-| `modifyRoom(String roomId, String field, String value)` | REQ8 | PermissionDenied, NotFound, Malformed |
-| `deleteRoom(String roomId)` | REQ9 | PermissionDenied, NotFound |
-| `book(String roomId, String date, String start, String end, String purpose)` | REQ10 | Conflict, NotFound, Malformed |
-| `modifyBooking(String bookingId, ...)` | REQ11 | PermissionDenied, Conflict, NotFound |
-| `deleteBooking(String bookingId)` | REQ12 | PermissionDenied, NotFound |
-| `search(String date, String start, String end, int minCapacity, String features)` | REQ13 | Malformed |
-| `schedule(String roomId, String weekStartDate)` | REQ14 | NotFound, Malformed |
-| `listRoom(String roomId)` / `listAllRooms()` | REQ15 / REQ16 | NotFound |
-| `listBookings()` | REQ17 | — |
-
-返回值统一是**可直接打印的字符串**（或字符串列表），格式化留在 model，保证 CLI 与未来的 GUI 输出一致。
-
-## 4. 三条铁律
-
-1. **业务判断一律在 model**。`controller` 里出现 `if (user.getRole() == ADMIN)` 就是错的位置——权限判定放 `Permission` / `CROBS`，否则测不到、coverage 掉分。
-2. **命令一律走 `Dispatcher`**，日志（REQ1）只在这一处写，不要每条命令自己写。
-3. **异常不吞**：model 抛 `CrobsException` 子类，`Dispatcher` 统一捕获并转成用户可读信息。返回 `String` 表示错误会破坏可测性。
-
-## 5. 分工映射
-
-| 成员 | 包 | REQ |
-|---|---|---|
-| A · ChrispearQues | `Application`、`controller`、`io` | REQ1, 4, 5, 6, 18 |
-| B · LeoLiuZY | `model`: User/Room/IdGenerator | REQ2, 3, 7, 8, 9, 15, 16 |
-| C · brianisbadass | `model`: Booking/TimeSlot + 预约核心命令 | REQ10, 11, 12 |
-| D · nocketenyin | `model`: 查询 + `ConsoleView` 输出格式 + 用户手册 | REQ13, 14, 17 |
+| A · ChrispearQues | `Application`, `controller`, `io` | REQ1, 4, 5, 6, 18 |
+| B · LeoLiuZY | `model`: User / Room / IdGenerator | REQ2, 3, 7, 8, 9, 15, 16 |
+| C · brianisbadass | `model`: Booking / TimeSlot + booking rules | REQ10, 11, 12 |
+| D · nocketenyin | `model`: search / schedule / listBookings, output format, user manual | REQ13, 14, 17 |

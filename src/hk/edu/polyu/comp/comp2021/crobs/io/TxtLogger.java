@@ -1,16 +1,43 @@
 package hk.edu.polyu.comp.comp2021.crobs.io;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 /** REQ1: writes one command per line, in execution order. */
 public class TxtLogger implements OperationLogger {
 
     private final Path file;
+    private final List<String> lines = new ArrayList<>();
 
-    public TxtLogger(Path file) { this.file = file; }
+    public TxtLogger(Path file) {
+        this.file = file;
+        write();
+    }
 
     @Override
     public void log(int index, String command) {
-        throw new UnsupportedOperationException("TODO: append one line");
+        lines.add(command);
+        write();
+    }
+
+    private void write() {
+        StringBuilder text = new StringBuilder();
+        for (String line : lines) {
+            text.append(line).append('\n');
+        }
+        try {
+            Path parent = file.toAbsolutePath().getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            Files.write(file, text.toString().getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            throw new UncheckedIOException("Cannot write the TXT log " + file, e);
+        }
     }
 }

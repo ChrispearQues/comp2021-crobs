@@ -24,7 +24,6 @@ public class SearchCommand implements Command {
 
     @Override
     public String execute() {
-        // TODO(REQ13)
-        throw new UnsupportedOperationException("TODO: SearchCommand.execute");
+        return String.join("\n", crobs.search(date, startTime, endTime, minCapacity, features));
     }
 }

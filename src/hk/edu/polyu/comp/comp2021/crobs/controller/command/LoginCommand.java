@@ -2,6 +2,7 @@ package hk.edu.polyu.comp.comp2021.crobs.controller.command;
 
 import hk.edu.polyu.comp.comp2021.crobs.controller.Command;
 import hk.edu.polyu.comp.comp2021.crobs.model.CROBS;
+import hk.edu.polyu.comp.comp2021.crobs.model.CrobsMessages;
 
 /** REQ5 */
 public class LoginCommand implements Command {
@@ -16,7 +17,7 @@ public class LoginCommand implements Command {
 
     @Override
     public String execute() {
-        // TODO(REQ5)
-        throw new UnsupportedOperationException("TODO: LoginCommand.execute");
+        crobs.login(userId);
+        return String.format(CrobsMessages.LOGGED_IN, crobs.getCurrentUser().getId());
     }
 }

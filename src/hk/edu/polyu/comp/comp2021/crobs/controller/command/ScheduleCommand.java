@@ -18,7 +18,6 @@ public class ScheduleCommand implements Command {
 
     @Override
     public String execute() {
-        // TODO(REQ14)
-        throw new UnsupportedOperationException("TODO: ScheduleCommand.execute");
+        return String.join("\n", crobs.schedule(roomId, weekStartDate));
     }
 }
