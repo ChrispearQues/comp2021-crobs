@@ -57,8 +57,11 @@ Two global constraints shape the code:
 | `controller/command/ListBookingsCommand.java` | same |
 | `test/.../model/DateFormatsTest.java` | 15 cases |
 | `test/.../model/RoomSearchTest.java` | 15 cases |
-| `test/.../model/ScheduleViewTest.java` | 12 cases |
+| `test/.../model/ScheduleViewTest.java` | 13 cases |
 | `test/.../model/BookingListViewTest.java` | 5 cases |
+
+Module D does **not** own `Application`, `CommandParser`, `Dispatcher`, `Session`
+or `Permission`; those belong to module A and are only read here.
 
 The three command classes contain no logic beyond `String.join("\n", ...)`, so
 the whole module is reachable from the model tests.
@@ -113,7 +116,8 @@ ScheduleView(Map<String, Room> rooms, Collection<Booking> bookings)
 List<String> week(String roomId, String weekStartDate, User viewer)
 ```
 
-1. an unknown room ID throws `NotFoundException`;
+1. the room is looked up whatever the case of the ID, so `schedule r001` answers
+   the same as `listRoom r001`; an unknown ID throws `NotFoundException`;
 2. the window is `[weekStartDate, weekStartDate + 6]`, both ends included, so the
    eighth day never appears;
 3. keep only the bookings of that room inside the window — "active" means "not
@@ -213,6 +217,11 @@ by a unit test.
    handled by the JDK; a hand-written validator would need its own tests.
 6. **Empty results return one line of text instead of an empty list** — the user
    gets feedback, and the command stays a one-liner.
+7. **`CrobsMessages` carries no `Error: ` prefix** — the `Dispatcher` adds it once
+   for every exception, whoever threw it, so the prefix cannot double up.
+8. **Room IDs are matched case-insensitively in REQ14** — the facade already
+   upper-cases IDs before a lookup, and a view that compared exactly would make
+   `schedule r001` fail while `listRoom r001` succeeded.
 
 ## 6. Tests
 
@@ -247,9 +256,36 @@ line coverage.
 
 ## 8. Known limitations
 
+- **REQ13 depends on REQ10.** `RoomSearch.isBusy` asks
+  `TimeSlot.overlaps(TimeSlot)`, which module C owns. Until that method is
+  implemented, a search works over an empty booking list and fails loudly as soon
+  as one booking exists. The dependency is marked in the `isBusy` javadoc; D does
+  not guess a conflict rule that C may contradict.
 - `search` treats a room as busy if any booking overlaps the slot, including a
   booking that belongs to the searching user. The specification asks for
   "available rooms", so this is the conservative reading.
 - `schedule` does not mark the caller's own bookings in any special way beyond
   showing the real user ID; there is no visual difference from an admin's view of
   their own booking.
+
+## 9. Follow-up from the 15 November review
+
+| Item in `docs/COMPAT-BD.md` | State |
+|---|---|
+| §4.3 case of IDs | fixed: `ScheduleView.findRoom` matches the ID case-insensitively, covered by `findsTheRoomWhateverTheCaseOfTheId` and `scheduleAcceptsALowerCaseRoomId` |
+| §4.4 `Error: Error:` | fixed: every error text in `CrobsMessages` lost its prefix, covered by `errorMessagesLeaveThePrefixToTheDispatcher` |
+| §4.5 ownership of `DateFormats` / `CrobsMessages` | kept: both files are edited only on `feat/design-d-query` |
+| §4.2 controller files not taken | confirmed: `Application`, `CommandParser`, `Dispatcher`, `Permission`, `Session` stay module A's |
+| §4.1 REQ13 blocked on REQ10 | unchanged, documented in §8 above |
+
+Answers to the questions of §6 that touch module D:
+
+1. Permission checks belong in the facade (`CROBS`), next to `changeRole`; D's
+   views take an already-authenticated `User` and never check a role themselves.
+2. Validate before minting an ID, so a rejected command does not burn a `U00x`.
+3. Removing a user or a room also drops the matching bookings; whether a cancelled
+   booking should leave a trace is module C's decision, REQ17 does not need one.
+4. The room and booking line formats are D's (`id type capacity features`, then
+   `bookingId ...`); REQ15 and REQ16 reuse the same format so the output of a room
+   never changes between commands.
+5. A cancelled booking is simply forgotten; REQ1's command log is the only trace.
