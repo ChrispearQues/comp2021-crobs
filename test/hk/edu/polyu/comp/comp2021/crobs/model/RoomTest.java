@@ -11,18 +11,21 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class RoomTest {
+/** Unit tests for {@link Room} and {@link RoomType}. */
+class RoomTest {
+
     @Test
-    void testValidRoomCreationAndHelpers() {
-        Set<String> features = Room.parseFeatures("projector, whiteboard, projector");
+    void testValidRoomCreationDescribeAndCaseInsensitiveFeatures() {
+        Set<String> features = Room.parseFeatures("Projector, WhiteBoard, PROJECTOR");
         Room room = new Room("R001", RoomType.LECTURE_THEATRE, 120, features);
 
         assertEquals("R001", room.getId());
         assertEquals(RoomType.LECTURE_THEATRE, room.getType());
         assertEquals(120, room.getCapacity());
         assertEquals(2, room.getFeatures().size());
-        assertTrue(room.hasAllFeatures(Arrays.asList("projector", "whiteboard")));
+        assertTrue(room.hasAllFeatures(Arrays.asList("projector", "WHITEBOARD")));
         assertFalse(room.hasAllFeatures(Collections.singletonList("computers")));
+        assertEquals("R001 lectureTheatre 120 projector,whiteboard", room.describe());
         assertEquals("R001 | lectureTheatre | capacity=120 | features=projector,whiteboard", room.toString());
     }
 
@@ -32,6 +35,7 @@ public class RoomTest {
         assertTrue(room.getFeatures().isEmpty());
         assertTrue(room.hasAllFeatures(null));
         assertTrue(room.hasAllFeatures(Collections.emptyList()));
+        assertEquals("R002 meetingRoom 1 -", room.describe());
         assertEquals("R002 | meetingRoom | capacity=1 | features=none", room.toString());
 
         room.modify("roomType", "computerLab");
@@ -40,11 +44,13 @@ public class RoomTest {
         room.modify("capacity", "45");
         assertEquals(45, room.getCapacity());
 
-        room.modify("features", "computers, microphone");
+        room.modify("features", "Computers, Microphone");
         assertEquals(2, room.getFeatures().size());
+        assertEquals("R002 computerLab 45 computers,microphone", room.describe());
 
         room.modify("features", "-");
         assertTrue(room.getFeatures().isEmpty());
+        assertEquals("R002 computerLab 45 -", room.describe());
     }
 
     @Test
