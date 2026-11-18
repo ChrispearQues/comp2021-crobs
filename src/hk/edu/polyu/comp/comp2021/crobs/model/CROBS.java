@@ -15,6 +15,9 @@ import java.util.Map;
  */
 public class CROBS {
 
+    /** The superadmin is created with the program and keeps this fixed ID forever. */
+    public static final String SUPERADMIN_ID = "U000";
+
     private final Map<String, User> users = new LinkedHashMap<>();
     private final Map<String, Room> rooms = new LinkedHashMap<>();
     private final Map<String, Booking> bookings = new LinkedHashMap<>();
@@ -27,8 +30,9 @@ public class CROBS {
 
     /** Creates a fresh system with no user logged in and one superadmin. */
     public CROBS() {
-        String id = userIds.next();
-        users.put(id, new User(id, "superadmin", Role.SUPERADMIN));
+        // The superadmin is not produced by the ID generator, so its ID is U000
+        // on every run and the first real user keeps the ID U001.
+        users.put(SUPERADMIN_ID, new User(SUPERADMIN_ID, "superadmin", Role.SUPERADMIN));
     }
 
     /**

@@ -73,7 +73,7 @@ covered by the unit tests. The controller never inspects a role.
 |---|---|---|---|
 | `login(String userId)` | 5 | — | NotFound, Malformed |
 | `logout()` | 6 | — | — |
-| `addUser(String name)` | 2 | `User U002 created.` | PermissionDenied, Malformed |
+| `addUser(String name)` | 2 | `User U001 created.` | PermissionDenied, Malformed |
 | `removeUser(String userId)` | 3 | — | PermissionDenied, NotFound |
 | `changeRole(String userId, String role)` | 4 | — | PermissionDenied, NotFound, Malformed |
 | `addRoom(String type, String capacity, String features)` | 7 | `Room R001 created.` | PermissionDenied, Malformed |
@@ -102,7 +102,7 @@ schedule R002 2026-11-16            (regular user)
 B003 2026-11-16 09:00-11:00 *** group meeting
 
 schedule R002 2026-11-16            (admin)
-B003 2026-11-16 09:00-11:00 U002 group meeting
+B003 2026-11-16 09:00-11:00 U001 group meeting
 
 listBookings
 B003 R002 2026-11-16 09:00-11:00 group meeting

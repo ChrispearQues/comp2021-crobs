@@ -120,12 +120,12 @@ java -jar junit-platform-console-standalone-1.14.0.jar execute \
      -cp "out:tout:lib/*" --scan-classpath=tout --details=summary   # 174/174
 ```
 
-CLI smoke run on the integrated build (`U001` is the generated superadmin ID,
+CLI smoke run on the integrated build (`U000` is the fixed superadmin ID,
 see §6 item 1):
 
 | Command | Expected | Observed |
 |---|---|---|
-| `login U001` / `addUser Alice Smith` / `changeRole U002 admin` / `logout` / `login U002` / `quit` with `-txt` + `-html` | both logs, numbered 1..6 | both logs, `1 login U001` … `6 quit`, HTML rows match |
+| `login U000` / `addUser Alice Smith` / `changeRole U001 admin` / `logout` / `login U001` / `quit` with `-txt` + `-html` | both logs, numbered 1..6 | both logs, `1 login U000` … `6 quit`, HTML rows match |
 | same run without options | no log files created | `ls -A` empty, exit 0 |
 | `-txt` (no file name) | usage, exit 1 | `Missing file name after -txt` + usage, exit 1, no `log.txt`/`log.html` |
 | `-foo bar` | usage, exit 1 | `Unknown option: -foo` + usage, exit 1 |
@@ -136,12 +136,11 @@ see §6 item 1):
 
 ## 6. Open questions (need a human decision before submission)
 
-1. **Superadmin ID.** D generates the superadmin as `U001` (first ID of
-   `IdGenerator("U")`); A hard-codes `U000` with the comment "its ID stays U000
-   on every run". The assignment text is not in this repository, so the merge
-   keeps D's behaviour; the tests, `ARCHITECTURE.md` ("User U002 created.") and
-   the CLI smoke runs all assume `U001`. If the spec says `U000`, change
-   `CROBS()` plus the fixtures in `CROBSTest` — one place, no controller change.
+1. **Superadmin ID — resolved 18 November 2026.** The superadmin keeps the
+   fixed ID `U000` and is not produced by `IdGenerator("U")`, so the first real
+   user is `U001` (A's original rule, now the integrated behaviour as well).
+   Changed in `CROBS()` (`SUPERADMIN_ID`) with the fixtures in `CROBSTest`
+   updated to match; no controller change was needed.
 2. **Default log files.** The baseline always wrote `log.txt`/`log.html`; the
    integrated branch writes only what `-txt`/`-html` name, and no option means
    no log. If the grader starts the program without options and expects logs,

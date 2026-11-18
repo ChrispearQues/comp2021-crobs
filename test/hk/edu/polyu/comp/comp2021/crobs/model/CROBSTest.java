@@ -39,12 +39,12 @@ class CROBSTest {
         crobs = new CROBS();
     }
 
-    /** Logs in as the automatically created superadmin (U001). */
+    /** Logs in as the automatically created superadmin (U000). */
     private void superadmin() {
-        crobs.login("U001");
+        crobs.login("U000");
     }
 
-    /** Creates U002, an empty room R001 and logs back in as the superadmin. */
+    /** Creates U001, an empty room R001 and logs back in as the superadmin. */
     private void standardFixture() {
         superadmin();
         crobs.addUser("Alice");
@@ -62,7 +62,7 @@ class CROBSTest {
     void theSuperAdminIsCreatedAutomatically() {
         superadmin();
 
-        assertEquals("U001", crobs.getCurrentUser().getId());
+        assertEquals("U000", crobs.getCurrentUser().getId());
         assertEquals(Role.SUPERADMIN, crobs.getCurrentUser().getRole());
     }
 
@@ -75,7 +75,7 @@ class CROBSTest {
     void loginTwiceAsTheSameUserIsRejected() {
         superadmin();
 
-        assertThrows(MALFORMED, () -> crobs.login("U001"));
+        assertThrows(MALFORMED, () -> crobs.login("U000"));
     }
 
     @Test
@@ -100,10 +100,10 @@ class CROBSTest {
     void addUserCreatesARegularUser() {
         superadmin();
 
-        assertEquals("User U002 created.", crobs.addUser("Alice"));
+        assertEquals("User U001 created.", crobs.addUser("Alice"));
 
         crobs.logout();
-        crobs.login("U002");
+        crobs.login("U001");
         assertEquals(Role.REGULAR, crobs.getCurrentUser().getRole());
         assertEquals("Alice", crobs.getCurrentUser().getName());
     }
@@ -115,7 +115,7 @@ class CROBSTest {
         superadmin();
         crobs.addUser("Alice");
         crobs.logout();
-        crobs.login("U002");
+        crobs.login("U001");
         assertThrows(DENIED, () -> crobs.addUser("Bob"));
     }
 
@@ -131,14 +131,14 @@ class CROBSTest {
     void removeUserDeletesTheUserAndTheBookings() {
         standardFixture();
         crobs.logout();
-        crobs.login("U002");
+        crobs.login("U001");
         crobs.book("R001", DATE, "09:00", "11:00", "group meeting");
         crobs.logout();
         superadmin();
 
-        crobs.removeUser("U002");
+        crobs.removeUser("U001");
 
-        assertThrows(NOT_FOUND, () -> crobs.login("U002"));
+        assertThrows(NOT_FOUND, () -> crobs.login("U001"));
         assertEquals(Collections.singletonList(CrobsMessages.NO_BOOKING_IN_WEEK),
                 crobs.schedule("R001", WEEK));
     }
@@ -146,9 +146,9 @@ class CROBSTest {
     @Test
     void removeUserRejectsAnAdmin() {
         standardFixture();
-        crobs.changeRole("U002", "admin");
+        crobs.changeRole("U001", "admin");
 
-        assertThrows(DENIED, () -> crobs.removeUser("U002"));
+        assertThrows(DENIED, () -> crobs.removeUser("U001"));
     }
 
     @Test
@@ -162,9 +162,9 @@ class CROBSTest {
     void removeUserRequiresAnAdmin() {
         standardFixture();
         crobs.logout();
-        crobs.login("U002");
+        crobs.login("U001");
 
-        assertThrows(DENIED, () -> crobs.removeUser("U003"));
+        assertThrows(DENIED, () -> crobs.removeUser("U002"));
     }
 
     // ---- REQ4: roles --------------------------------------------------------
@@ -173,16 +173,16 @@ class CROBSTest {
     void changeRolePromotesAndDemotes() {
         standardFixture();
 
-        crobs.changeRole("U002", "ADMIN");
+        crobs.changeRole("U001", "ADMIN");
         crobs.logout();
-        crobs.login("U002");
+        crobs.login("U001");
         assertEquals(Role.ADMIN, crobs.getCurrentUser().getRole());
 
         crobs.logout();
         superadmin();
-        crobs.changeRole("U002", "regular");
+        crobs.changeRole("U001", "regular");
         crobs.logout();
-        crobs.login("U002");
+        crobs.login("U001");
         assertEquals(Role.REGULAR, crobs.getCurrentUser().getRole());
     }
 
@@ -190,23 +190,23 @@ class CROBSTest {
     void changeRoleRequiresTheSuperAdmin() {
         standardFixture();
         crobs.logout();
-        crobs.login("U002");
+        crobs.login("U001");
 
-        assertThrows(DENIED, () -> crobs.changeRole("U002", "admin"));
+        assertThrows(DENIED, () -> crobs.changeRole("U001", "admin"));
     }
 
     @Test
     void changeRoleRejectsAnUnknownRole() {
         standardFixture();
 
-        assertThrows(MALFORMED, () -> crobs.changeRole("U002", "manager"));
+        assertThrows(MALFORMED, () -> crobs.changeRole("U001", "manager"));
     }
 
     @Test
     void changeRoleRejectsTheSuperAdmin() {
         superadmin();
 
-        assertThrows(DENIED, () -> crobs.changeRole("U001", "regular"));
+        assertThrows(DENIED, () -> crobs.changeRole("U000", "regular"));
     }
 
     @Test
@@ -266,7 +266,7 @@ class CROBSTest {
     void modifyRoomRequiresAnAdmin() {
         standardFixture();
         crobs.logout();
-        crobs.login("U002");
+        crobs.login("U001");
 
         assertThrows(DENIED, () -> crobs.modifyRoom("R001", "capacity", "80"));
     }
@@ -304,7 +304,7 @@ class CROBSTest {
     void deleteRoomRequiresAnAdmin() {
         standardFixture();
         crobs.logout();
-        crobs.login("U002");
+        crobs.login("U001");
 
         assertThrows(DENIED, () -> crobs.deleteRoom("R001"));
     }
@@ -450,7 +450,7 @@ class CROBSTest {
         standardFixture();
         crobs.book("R001", DATE, "09:00", "11:00", "group meeting");
         crobs.logout();
-        crobs.login("U002");
+        crobs.login("U001");
 
         assertThrows(DENIED, () -> crobs.modifyBooking("B001", "R001", DATE, "14:00", "16:00", "hijack"));
     }
@@ -486,7 +486,7 @@ class CROBSTest {
         standardFixture();
         crobs.book("R001", DATE, "09:00", "11:00", "group meeting");
         crobs.logout();
-        crobs.login("U002");
+        crobs.login("U001");
 
         assertThrows(DENIED, () -> crobs.deleteBooking("B001"));
     }
@@ -529,7 +529,7 @@ class CROBSTest {
         standardFixture();
         crobs.book("R001", DATE, "09:00", "11:00", "group meeting");
         crobs.logout();
-        crobs.login("U002");
+        crobs.login("U001");
 
         assertEquals(Collections.singletonList(
                 "B001 " + DATE + " 09:00-11:00 *** group meeting"), crobs.schedule("R001", WEEK));
@@ -539,13 +539,13 @@ class CROBSTest {
     void scheduleShowsEveryUserToTheSuperAdmin() {
         standardFixture();
         crobs.logout();
-        crobs.login("U002");
+        crobs.login("U001");
         crobs.book("R001", DATE, "09:00", "11:00", "group meeting");
         crobs.logout();
         superadmin();
 
         assertEquals(Collections.singletonList(
-                "B001 " + DATE + " 09:00-11:00 U002 group meeting"), crobs.schedule("R001", WEEK));
+                "B001 " + DATE + " 09:00-11:00 U001 group meeting"), crobs.schedule("R001", WEEK));
     }
 
     @Test
@@ -554,7 +554,7 @@ class CROBSTest {
         crobs.book("R001", DATE, "09:00", "11:00", "group meeting");
 
         assertEquals(Collections.singletonList(
-                "B001 " + DATE + " 09:00-11:00 U001 group meeting"), crobs.schedule("r001", WEEK));
+                "B001 " + DATE + " 09:00-11:00 U000 group meeting"), crobs.schedule("r001", WEEK));
     }
 
     @Test
