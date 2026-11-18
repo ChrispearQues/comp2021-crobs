@@ -30,7 +30,21 @@ public class Room {
         this.id = id;
         this.type = type;
         this.capacity = capacity;
-        this.features = features;
+        this.features = normaliseFeatures(features);
+    }
+
+    /** Lower-cases and de-duplicates the features of a room. */
+    private static Set<String> normaliseFeatures(Collection<String> raw) {
+        Set<String> normalised = new LinkedHashSet<>();
+        if (raw == null) {
+            return normalised;
+        }
+        for (String feature : raw) {
+            if (feature != null && !feature.trim().isEmpty()) {
+                normalised.add(feature.trim().toLowerCase(Locale.ROOT));
+            }
+        }
+        return normalised;
     }
 
     /** @return the unique room ID */
@@ -75,7 +89,16 @@ public class Room {
      * @return true when this room contains every requested feature
      */
     public boolean hasAllFeatures(Set<String> wanted) {
-        return features.containsAll(wanted);
+        if (wanted == null || wanted.isEmpty()) {
+            return true;
+        }
+        for (String feature : wanted) {
+            if (feature == null
+                    || !features.contains(feature.trim().toLowerCase(Locale.ROOT))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
