@@ -71,6 +71,57 @@
 
 ---
 
+## 2.6 REQ1–REQ18 逐条验收（2026-11-18 CLI 实测）
+
+在 `main`（`90c6da0`）上逐条跑命令验证，非静态阅读。
+
+| REQ | 要求 | 实测结果 |
+| --- | --- | --- |
+| REQ1 | TXT + HTML 双日志，文件名由启动参数给出 | ✅ `-txt log.txt -html log.html`：TXT 每行 `序号 命令`，HTML 表格首行表头 + 每命令一行 |
+| REQ2 | `addUser name` 自动生成用户 ID | ✅ `User U001 created.` |
+| REQ3 | `removeUser targetUserID` 并取消其预约 | ✅ 删除后该用户两条预约同时消失 |
+| REQ4 | `changeRole targetUserId newRole` 仅超管可用 | ✅ 普通 ADMIN 执行 → `Only the superadmin can do that.` |
+| REQ5 | `login userID` | ✅ 会话开始时无人登录；已登录时可直接 `login` 另一用户 |
+| REQ6 | `logout` | ✅ |
+| REQ7 | `addRoom roomType capacity features`，四种房型 | ✅ lectureTheatre / computerLab / seminarRoom / meetingRoom 全通 |
+| REQ8 | `modifyRoom roomID field newValue` | ✅ type / capacity / features；未知字段被拒 |
+| REQ9 | `deleteRoom roomID` 并取消**未来**预约 | ✅ 未来预约消失，**已过去的预约保留** |
+| REQ10 | `book roomId date startTime endTime purpose` + 冲突检测 | ✅ 重叠拒绝；09:00–10:00 与 10:00–11:00 相邻允许；被包含的时间段拒绝；不同房间允许 |
+| REQ11 | `modifyBooking bookingID roomId date startTime endTime purpose`（6 参数） | ✅ 改房 / 改时间 / 改用途均可；改自己预约不与自己冲突 |
+| REQ12 | `deleteBooking bookingID` | ✅ |
+| REQ13 | `search date startTime endTime minCapacity features` | ✅ 容量、特性、可用性三项同时生效 |
+| REQ14 | `schedule roomId weekStartDate`，7 天，普通用户遮蔽他人 | ✅ 11-20 起算含 11-20 至 11-26，不含 11-19 与 11-27；普通用户看到 `***`，管理员看到 userID |
+| REQ15 | `listRoom roomID` | ✅ |
+| REQ16 | `listAllRooms`，按 room ID 升序 | ✅ |
+| REQ17 | `listBookings`，按日期与开始时间排序 | ✅ |
+| REQ18 | `quit` | ✅ |
+| BON1 | GUI | ❌ 未做（+6） |
+| BON2 | undo / redo | ❌ 未做（+3） |
+
+**结论：18 条需求全部实现并实测通过，2 项加分未做。**
+
+**需要留意的两点**
+
+1. 题面未规定日期时间格式，本实现用 `yyyy-MM-dd` 与 `HH:MM`，需在用户手册中写明。
+2. 语言级别：题面要求 IntelliJ 中 SDK 25 + language level 8。实测 `javac -source 8 -target 8` 0 错误（`Files.readString` 等属 JDK 11+ **API**，语言级别 8 不受限；用 `--release 8` 才会报错，那不等于 IDEA 的设置）。
+
+---
+
+## 2.7 个人分公式（题面第 11 节）
+
+```
+个人分 = min(组总分 x × 组员数 y × 本人贡献 z%, x)
+```
+
+- 4 人组：每人 25% → `min(x × 4 × 25%, x) = x`，**人均拿满组总分**
+- 高于 25% 不额外加分（有上限），**只有低于 25% 的人会受损**
+- 报告标题正下方必须列出各成员贡献百分比（题面附录 A 模板）
+- 不交声明或声明不实，最高扣 40%
+
+⇒ 组内按平均 25% 申报，是全组最优解；这也让「B 实际做过但被覆盖」「C 产出不足」两件事不必用 blame 数字去争。
+
+---
+
 ## 3. 分支结构（远端 5 个）
 
 | 分支 | 提交 | 日期 | 测试 | 用途 |
