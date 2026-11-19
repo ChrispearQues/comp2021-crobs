@@ -237,10 +237,10 @@ java -jar junit-platform-console-standalone.jar execute \
 |---|---|---|
 | `DateFormatsTest` | 15 | leap day, month 13, two-digit year, `24:00`, `9:00`, reversed interval, cross-month week |
 | `RoomSearchTest` | 15 | capacity equal/below the minimum, all features required, dash, busy room, touching endpoints, other day, sorting, empty result, every malformed input |
-| `ScheduleViewTest` | 12 | first and last day of the window, eighth day excluded, before the window, cross-month window, masking, admin, superadmin, unknown room, invalid date, empty week |
+| `ScheduleViewTest` | 13 | first and last day of the window, eighth day excluded, before the window, cross-month window, case of the room ID, masking, admin, superadmin, unknown room, invalid date, empty week |
 | `BookingListViewTest` | 5 | own bookings only, admin sees only their own, sorting, purpose with spaces, empty result |
 
-47 dedicated cases; REQ13, REQ14 and REQ17 are additionally exercised end to end
+48 dedicated cases; REQ13, REQ14 and REQ17 are additionally exercised end to end
 through `CROBS` in `CROBSTest`. Together they leave the `model` package at 100 %
 line coverage.
 
