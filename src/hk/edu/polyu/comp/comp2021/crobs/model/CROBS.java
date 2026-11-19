@@ -1,10 +1,3 @@
-package hk.edu.polyu.comp.comp2021.crobs.model;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -187,12 +180,24 @@ public class CROBS {
      */
     public String book(String roomId, String date, String startTime, String endTime, String purpose) {
         Permission.requireLogin(currentUser);
+
         Room room = requireRoom(roomId);
         TimeSlot slot = parseSlot(date, startTime, endTime);
+        String validPurpose = requireText(purpose, CrobsMessages.EMPTY_PURPOSE);
+
         requireFree(room.getId(), slot, null);
+
         String id = bookingIds.next();
-        bookings.put(id, new Booking(id, currentUser.getId(), room.getId(), slot,
-                requireText(purpose, CrobsMessages.EMPTY_PURPOSE)));
+        Booking booking = new Booking(
+                id,
+                currentUser.getId(),
+                room.getId(),
+                slot,
+                validPurpose
+        );
+
+        bookings.put(id, booking);
+
         return String.format(CrobsMessages.BOOKING_CREATED, id);
     }
 
@@ -214,11 +219,15 @@ public class CROBS {
     public void modifyBooking(String bookingId, String roomId, String date,
                               String startTime, String endTime, String purpose) {
         Permission.requireLogin(currentUser);
+
         Booking booking = requireOwnedBooking(bookingId);
         Room room = requireRoom(roomId);
         TimeSlot slot = parseSlot(date, startTime, endTime);
+        String validPurpose = requireText(purpose, CrobsMessages.EMPTY_PURPOSE);
+
         requireFree(room.getId(), slot, booking.getId());
-        booking.modify(room.getId(), slot, requireText(purpose, CrobsMessages.EMPTY_PURPOSE));
+
+        booking.modify(room.getId(), slot, validPurpose);
     }
 
     /**
@@ -231,7 +240,9 @@ public class CROBS {
      */
     public void deleteBooking(String bookingId) {
         Permission.requireLogin(currentUser);
+
         Booking booking = requireOwnedBooking(bookingId);
+
         bookings.remove(booking.getId());
     }
 

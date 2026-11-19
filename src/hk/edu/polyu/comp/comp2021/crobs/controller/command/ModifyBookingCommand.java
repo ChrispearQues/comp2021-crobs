@@ -20,8 +20,8 @@ public class ModifyBookingCommand extends StateChangingCommand {
      * @param bookingId the booking to change
      * @param roomId    the new room
      * @param date      the new day, as yyyy-MM-dd
-     * @param startTime the new start time, as HH:mm
-     * @param endTime   the new end time, as HH:mm
+     * @param startTime the start time, as HH:mm
+     * @param endTime   the end time, as HH:mm
      * @param purpose   the new purpose
      */
     public ModifyBookingCommand(CROBS crobs, String bookingId, String roomId, String date,
