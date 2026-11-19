@@ -1,12 +1,10 @@
 package hk.edu.polyu.comp.comp2021.crobs.controller.command;
 
-import hk.edu.polyu.comp.comp2021.crobs.controller.Command;
 import hk.edu.polyu.comp.comp2021.crobs.model.CROBS;
 
 /** REQ10: books a room for the logged-in user. */
-public class BookCommand implements Command {
+public class BookCommand extends StateChangingCommand {
 
-    private final CROBS crobs;
     private final String roomId;
     private final String date;
     private final String startTime;
@@ -25,7 +23,7 @@ public class BookCommand implements Command {
      */
     public BookCommand(CROBS crobs, String roomId, String date, String startTime,
                        String endTime, String purpose) {
-        this.crobs = crobs;
+        super(crobs);
         this.roomId = roomId;
         this.date = date;
         this.startTime = startTime;
@@ -35,7 +33,7 @@ public class BookCommand implements Command {
 
     /** @return the confirmation line, including the generated booking ID */
     @Override
-    public String execute() {
+    protected String run() {
         return crobs.book(roomId, date, startTime, endTime, purpose);
     }
 }

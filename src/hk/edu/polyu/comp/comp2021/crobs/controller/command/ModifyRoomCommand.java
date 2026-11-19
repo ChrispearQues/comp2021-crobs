@@ -1,13 +1,11 @@
 package hk.edu.polyu.comp.comp2021.crobs.controller.command;
 
-import hk.edu.polyu.comp.comp2021.crobs.controller.Command;
 import hk.edu.polyu.comp.comp2021.crobs.model.CROBS;
 import hk.edu.polyu.comp.comp2021.crobs.model.CrobsMessages;
 
 /** REQ8: changes one field of a room. */
-public class ModifyRoomCommand implements Command {
+public class ModifyRoomCommand extends StateChangingCommand {
 
-    private final CROBS crobs;
     private final String roomId;
     private final String field;
     private final String newValue;
@@ -21,7 +19,7 @@ public class ModifyRoomCommand implements Command {
      * @param newValue the new value of that field
      */
     public ModifyRoomCommand(CROBS crobs, String roomId, String field, String newValue) {
-        this.crobs = crobs;
+        super(crobs);
         this.roomId = roomId;
         this.field = field;
         this.newValue = newValue;
@@ -29,7 +27,7 @@ public class ModifyRoomCommand implements Command {
 
     /** @return the confirmation line */
     @Override
-    public String execute() {
+    protected String run() {
         crobs.modifyRoom(roomId, field, newValue);
         return CrobsMessages.DONE;
     }

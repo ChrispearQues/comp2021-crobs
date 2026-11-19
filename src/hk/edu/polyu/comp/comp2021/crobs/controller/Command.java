@@ -25,4 +25,11 @@ public interface Command {
     default void undo() {
         throw new UnsupportedOperationException("This command cannot be undone");
     }
+
+    /**
+     * Re-applies the effect of {@link #execute()} after an {@link #undo()} (BON2).
+     */
+    default void redo() {
+        throw new UnsupportedOperationException("This command cannot be redone");
+    }
 }

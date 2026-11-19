@@ -311,6 +311,39 @@ public class CROBS {
         return new BookingListView(bookings.values()).of(currentUser);
     }
 
+    // ---- undo / redo support (BON2) ----------------------------------------
+
+    /**
+     * Copies the whole state of the system.
+     *
+     * @return a snapshot that undo or redo can put back later
+     */
+    public Snapshot snapshot() {
+        return new Snapshot(users, rooms, bookings,
+                userIds.getCounter(), roomIds.getCounter(), bookingIds.getCounter(),
+                currentUser == null ? null : currentUser.getId());
+    }
+
+    /**
+     * Replaces the whole state of the system with a snapshot. The logged-in
+     * user is restored by ID, so undo neither logs anybody in nor out.
+     *
+     * @param snapshot the state to put back
+     */
+    public void restore(Snapshot snapshot) {
+        users.clear();
+        users.putAll(snapshot.copyUsers());
+        rooms.clear();
+        rooms.putAll(snapshot.copyRooms());
+        bookings.clear();
+        bookings.putAll(snapshot.copyBookings());
+        userIds.setCounter(snapshot.getNextUserId());
+        roomIds.setCounter(snapshot.getNextRoomId());
+        bookingIds.setCounter(snapshot.getNextBookingId());
+        String currentId = snapshot.getCurrentUserId();
+        currentUser = currentId == null ? null : users.get(currentId);
+    }
+
     // ---- helpers -----------------------------------------------------------
 
     private User requireUser(String userId) {

@@ -1,13 +1,11 @@
 package hk.edu.polyu.comp.comp2021.crobs.controller.command;
 
-import hk.edu.polyu.comp.comp2021.crobs.controller.Command;
 import hk.edu.polyu.comp.comp2021.crobs.model.CROBS;
 import hk.edu.polyu.comp.comp2021.crobs.model.CrobsMessages;
 
 /** REQ12: deletes a booking of the logged-in user. */
-public class DeleteBookingCommand implements Command {
+public class DeleteBookingCommand extends StateChangingCommand {
 
-    private final CROBS crobs;
     private final String bookingId;
 
     /**
@@ -17,13 +15,13 @@ public class DeleteBookingCommand implements Command {
      * @param bookingId the booking to delete
      */
     public DeleteBookingCommand(CROBS crobs, String bookingId) {
-        this.crobs = crobs;
+        super(crobs);
         this.bookingId = bookingId;
     }
 
     /** @return the confirmation line */
     @Override
-    public String execute() {
+    protected String run() {
         crobs.deleteBooking(bookingId);
         return CrobsMessages.DONE;
     }

@@ -14,9 +14,11 @@ import hk.edu.polyu.comp.comp2021.crobs.controller.command.LogoutCommand;
 import hk.edu.polyu.comp.comp2021.crobs.controller.command.ModifyBookingCommand;
 import hk.edu.polyu.comp.comp2021.crobs.controller.command.ModifyRoomCommand;
 import hk.edu.polyu.comp.comp2021.crobs.controller.command.QuitCommand;
+import hk.edu.polyu.comp.comp2021.crobs.controller.command.RedoCommand;
 import hk.edu.polyu.comp.comp2021.crobs.controller.command.RemoveUserCommand;
 import hk.edu.polyu.comp.comp2021.crobs.controller.command.ScheduleCommand;
 import hk.edu.polyu.comp.comp2021.crobs.controller.command.SearchCommand;
+import hk.edu.polyu.comp.comp2021.crobs.controller.command.UndoCommand;
 import hk.edu.polyu.comp.comp2021.crobs.model.CROBS;
 import hk.edu.polyu.comp.comp2021.crobs.model.CrobsException;
 import hk.edu.polyu.comp.comp2021.crobs.model.CrobsMessages;
@@ -54,16 +56,36 @@ public class CommandParser {
     private static final String LIST_ROOM_USAGE = "listRoom roomID";
     private static final String LIST_ALL_ROOMS_USAGE = "listAllRooms";
     private static final String LIST_BOOKINGS_USAGE = "listBookings";
+    private static final String UNDO_USAGE = "undo";
+    private static final String REDO_USAGE = "redo";
 
     private final CROBS crobs;
+    private final CommandHistory history;
 
     /**
-     * Creates a parser that builds commands for one system.
+     * Creates a parser that builds commands for one system and keeps its own
+     * undo history.
      *
      * @param crobs the system the commands work on
      */
     public CommandParser(CROBS crobs) {
+        this(crobs, new CommandHistory());
+    }
+
+    /**
+     * Creates a parser that builds commands for one system, with a given undo history.
+     *
+     * @param crobs   the system the commands work on
+     * @param history the history that {@code undo} and {@code redo} work on
+     */
+    public CommandParser(CROBS crobs, CommandHistory history) {
         this.crobs = crobs;
+        this.history = history;
+    }
+
+    /** @return the history that {@code undo} and {@code redo} work on (BON2) */
+    public CommandHistory getHistory() {
+        return history;
     }
 
     /**
@@ -159,6 +181,14 @@ public class CommandParser {
         if ("listbookings".equals(name)) {
             requireArity(tokens, LIST_BOOKINGS_USAGE, name);
             return new ListBookingsCommand(crobs);
+        }
+        if ("undo".equals(name)) {
+            requireArity(tokens, UNDO_USAGE, name);
+            return new UndoCommand(crobs, history);
+        }
+        if ("redo".equals(name)) {
+            requireArity(tokens, REDO_USAGE, name);
+            return new RedoCommand(crobs, history);
         }
         throw new CrobsException.MalformedCommandException(
                 String.format(CrobsMessages.UNKNOWN_COMMAND, tokens.get(0)));

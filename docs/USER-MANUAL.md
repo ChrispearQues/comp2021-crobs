@@ -141,6 +141,7 @@ words `admin` and `regular`; the role of the superadmin can never be changed.
 | `addRoom` `modifyRoom` `deleteRoom` | ✔ | ✔ | – | – |
 | `book` `modifyBooking` `deleteBooking` `listBookings` | ✔ | ✔ | ✔ (own only) | – |
 | `search` `schedule` `listRoom` `listAllRooms` | ✔ | ✔ | ✔ | – |
+| `undo` `redo` | ✔ | ✔ | ✔ | – |
 
 A command that is refused because of the role prints one of:
 
@@ -167,6 +168,8 @@ Error: Only the superadmin can do that.
 | --- | --- | --- | --- |
 | Date | `yyyy-MM-dd` | `2026-11-20` | `20/11/2026`, `2026-2-30`, `2026-02-29` (not a leap year) |
 | Time | `HH:mm`, 24-hour clock | `09:00`, `23:59` | `9:00`, `24:00`, `09:60` |
+
+* `undo` and `redo` take no argument at all: `undo`, not `undo 3`.
 
 * A room's features are written as a **comma-separated list**, for example
   `wifi,projector`. The list is compared case-insensitively and duplicates are
@@ -426,6 +429,48 @@ B002 2026-11-20 10:00-11:00 Adjacent
 
 When the caller has no booking the answer is `No booking.`
 
+### 7.18 `undo` — anyone logged in
+
+Undo the most recent command that **changed** the state. Which commands those
+are:
+
+| Can be undone | Cannot be undone (they change nothing) |
+| --- | --- |
+| `addUser` `removeUser` `changeRole` `addRoom` `modifyRoom` `deleteRoom` `book` `modifyBooking` `deleteBooking` | `login` `logout` `search` `schedule` `listRoom` `listAllRooms` `listBookings` `quit` |
+
+```
+login U000
+Logged in as U000.
+addRoom computerLab 20 wifi
+Room R001 created.
+undo
+Undone.
+listAllRooms
+redo
+Redone.
+listAllRooms
+R001 computerLab 20 wifi
+```
+
+(The `listAllRooms` between `undo` and `redo` prints nothing, because the room
+is gone at that moment.)
+
+Undo restores the **whole** state as it was before that command, including the
+side effects: undoing `deleteRoom` brings the room back with the bookings it
+had, undoing `removeUser` brings the user back with their bookings, and undoing
+`addRoom` also gives the room ID back, so the next `addRoom` creates `R001`
+again. At most one command can be undone per `undo`; type it again to go further
+back. Reading commands such as `listAllRooms` do not disturb the undo history.
+
+Answers: `Undone.` or `Nothing to undo.`
+
+### 7.19 `redo` — anyone logged in
+
+Re-apply the command that was undone last. **A new state-changing command
+clears the redo history**, because the future that was undone no longer exists.
+
+Answers: `Redone.` or `Nothing to redo.`
+
 ---
 
 ## 8. Complete worked example
@@ -515,6 +560,7 @@ changed when a command fails.
 | `Unsupported room type "lab".` | the type word is not one of the four | see section 7.7 |
 | `Unknown room field "name".` | `modifyRoom` was given a field that does not exist | use `type`, `capacity` or `features` |
 | `The name must not be empty.` / `The purpose must not be empty.` | a blank argument | type a real value |
+| `Nothing to undo.` / `Nothing to redo.` | there is nothing on that stack | run a state-changing command first, then `undo` |
 | `Please type a command.` | an empty line was entered | it is harmless; type a command |
 | `Error: unterminated quoted argument.` | a `"` was opened and never closed | close the quote |
 

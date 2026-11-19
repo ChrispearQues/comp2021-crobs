@@ -43,6 +43,18 @@ public final class CrobsMessages {
     /** Confirmation of REQ6. */
     public static final String LOGGED_OUT = "Logged out.";
 
+    /** Confirmation of undo (BON2). */
+    public static final String UNDONE = "Undone.";
+
+    /** Confirmation of redo (BON2). */
+    public static final String REDONE = "Redone.";
+
+    /** Printed by undo when no command can be undone (BON2). */
+    public static final String NOTHING_TO_UNDO = "Nothing to undo.";
+
+    /** Printed by redo when no command can be redone (BON2). */
+    public static final String NOTHING_TO_REDO = "Nothing to redo.";
+
     /** Confirmation of every command that changes state silently. */
     public static final String DONE = "Done.";
 

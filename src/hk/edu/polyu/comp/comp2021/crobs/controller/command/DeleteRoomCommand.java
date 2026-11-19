@@ -1,13 +1,11 @@
 package hk.edu.polyu.comp.comp2021.crobs.controller.command;
 
-import hk.edu.polyu.comp.comp2021.crobs.controller.Command;
 import hk.edu.polyu.comp.comp2021.crobs.model.CROBS;
 import hk.edu.polyu.comp.comp2021.crobs.model.CrobsMessages;
 
 /** REQ9: deletes a room. */
-public class DeleteRoomCommand implements Command {
+public class DeleteRoomCommand extends StateChangingCommand {
 
-    private final CROBS crobs;
     private final String roomId;
 
     /**
@@ -17,13 +15,13 @@ public class DeleteRoomCommand implements Command {
      * @param roomId the room to delete
      */
     public DeleteRoomCommand(CROBS crobs, String roomId) {
-        this.crobs = crobs;
+        super(crobs);
         this.roomId = roomId;
     }
 
     /** @return the confirmation line */
     @Override
-    public String execute() {
+    protected String run() {
         crobs.deleteRoom(roomId);
         return CrobsMessages.DONE;
     }

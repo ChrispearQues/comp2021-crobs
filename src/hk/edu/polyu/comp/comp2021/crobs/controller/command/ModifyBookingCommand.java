@@ -1,13 +1,11 @@
 package hk.edu.polyu.comp.comp2021.crobs.controller.command;
 
-import hk.edu.polyu.comp.comp2021.crobs.controller.Command;
 import hk.edu.polyu.comp.comp2021.crobs.model.CROBS;
 import hk.edu.polyu.comp.comp2021.crobs.model.CrobsMessages;
 
 /** REQ11: changes an existing booking of the logged-in user. */
-public class ModifyBookingCommand implements Command {
+public class ModifyBookingCommand extends StateChangingCommand {
 
-    private final CROBS crobs;
     private final String bookingId;
     private final String roomId;
     private final String date;
@@ -28,7 +26,7 @@ public class ModifyBookingCommand implements Command {
      */
     public ModifyBookingCommand(CROBS crobs, String bookingId, String roomId, String date,
                                 String startTime, String endTime, String purpose) {
-        this.crobs = crobs;
+        super(crobs);
         this.bookingId = bookingId;
         this.roomId = roomId;
         this.date = date;
@@ -39,7 +37,7 @@ public class ModifyBookingCommand implements Command {
 
     /** @return the confirmation line */
     @Override
-    public String execute() {
+    protected String run() {
         crobs.modifyBooking(bookingId, roomId, date, startTime, endTime, purpose);
         return CrobsMessages.DONE;
     }

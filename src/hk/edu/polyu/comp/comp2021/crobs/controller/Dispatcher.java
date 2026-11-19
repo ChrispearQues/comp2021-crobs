@@ -55,6 +55,10 @@ public class Dispatcher {
         }
         try {
             String result = parsed.execute();
+            if (parsed.isUndoable()) {
+                // BON2: only a command that ran without error may be undone.
+                parser.getHistory().record(parsed);
+            }
             if (result != null && !result.isEmpty()) {
                 view.print(result);
             }

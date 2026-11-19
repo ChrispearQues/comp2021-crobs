@@ -27,6 +27,27 @@ public class IdGenerator {
     }
 
     /**
+     * Tells which number the next ID will carry. Used by undo and redo (BON2),
+     * which restore the state of the whole system, counters included.
+     *
+     * @return the number that {@link #next()} will use
+     */
+    public int getCounter() { return counter; }
+
+    /**
+     * Puts the counter back to a number it had before. Used by undo and redo (BON2).
+     *
+     * @param counter the number that {@link #next()} must use next
+     * @throws IllegalArgumentException when the number is smaller than 1
+     */
+    public void setCounter(int counter) {
+        if (counter < FIRST_NUMBER) {
+            throw new IllegalArgumentException("The counter must be positive.");
+        }
+        this.counter = counter;
+    }
+
+    /**
      * Produces the next ID, for example {@code U001}.
      *
      * @return the next unused ID

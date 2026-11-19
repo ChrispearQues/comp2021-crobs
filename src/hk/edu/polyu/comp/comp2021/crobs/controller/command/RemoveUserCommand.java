@@ -1,13 +1,11 @@
 package hk.edu.polyu.comp.comp2021.crobs.controller.command;
 
-import hk.edu.polyu.comp.comp2021.crobs.controller.Command;
 import hk.edu.polyu.comp.comp2021.crobs.model.CROBS;
 import hk.edu.polyu.comp.comp2021.crobs.model.CrobsMessages;
 
 /** REQ3: removes a regular user. */
-public class RemoveUserCommand implements Command {
+public class RemoveUserCommand extends StateChangingCommand {
 
-    private final CROBS crobs;
     private final String userId;
 
     /**
@@ -17,13 +15,13 @@ public class RemoveUserCommand implements Command {
      * @param userId the ID of the user to remove
      */
     public RemoveUserCommand(CROBS crobs, String userId) {
-        this.crobs = crobs;
+        super(crobs);
         this.userId = userId;
     }
 
     /** @return the confirmation line */
     @Override
-    public String execute() {
+    protected String run() {
         crobs.removeUser(userId);
         return CrobsMessages.DONE;
     }
