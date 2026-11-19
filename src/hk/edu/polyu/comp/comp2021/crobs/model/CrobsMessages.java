@@ -22,6 +22,9 @@ public final class CrobsMessages {
     /** Printed when the current user has no booking at all. */
     public static final String NO_BOOKING = "No booking.";
 
+    /** Printed when no room exists yet. */
+    public static final String NO_ROOM = "No room yet. An admin can add one with: addRoom roomType capacity features";
+
     /** Rendered in place of the feature list when a room has no feature. */
     public static final String NO_FEATURES = "-";
 
@@ -59,7 +62,7 @@ public final class CrobsMessages {
     public static final String DONE = "Done.";
 
     /** Error for REQ14 / REQ15 / REQ16, filled with the room ID. */
-    public static final String UNKNOWN_ROOM = "Room %s does not exist.";
+    public static final String UNKNOWN_ROOM = "Room %s does not exist. An admin can add one with: addRoom";
 
     /** Error for REQ5 / REQ3 / REQ4, filled with the user ID. */
     public static final String UNKNOWN_USER = "User %s does not exist.";
@@ -98,13 +101,13 @@ public final class CrobsMessages {
     public static final String EMPTY_PURPOSE = "The purpose must not be empty.";
 
     /** Error when nobody is logged in. */
-    public static final String NOT_LOGGED_IN = "Please login first.";
+    public static final String NOT_LOGGED_IN = "Please login first. Use: login <userID>, for example login U000";
 
     /** Error for REQ5 when the same user logs in twice, filled with the user ID. */
     public static final String ALREADY_LOGGED_IN = "User %s is already logged in.";
 
     /** Error when a regular user tries an admin operation. */
-    public static final String ADMIN_ONLY = "Only an admin can do that.";
+    public static final String ADMIN_ONLY = "Only an admin can do that. Log in as the superadmin (login U000) to manage users and rooms";
 
     /** Error when an admin tries a superadmin operation. */
     public static final String SUPERADMIN_ONLY = "Only the superadmin can do that.";

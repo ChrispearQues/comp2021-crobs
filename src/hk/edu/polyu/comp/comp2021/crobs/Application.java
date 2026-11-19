@@ -37,7 +37,8 @@ public class Application {
             + " [-txt <command-log.txt>] [-html <command-log.html>]";
 
     private static final String BANNER =
-            "Crobs - Campus Room Booking System. Type a command, or quit to exit.";
+            "Crobs - Campus Room Booking System. Type a command, or quit to exit.\n"
+            + "No user is logged in. Start with: login U000 (the superadmin).";
 
     /**
      * The log files requested on the command line; either one may be absent.

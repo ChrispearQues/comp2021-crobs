@@ -311,6 +311,9 @@ public class CROBS {
         Permission.requireLogin(currentUser);
         List<String> ids = new ArrayList<>(rooms.keySet());
         Collections.sort(ids);
+        if (ids.isEmpty()) {
+            return Collections.singletonList(CrobsMessages.NO_ROOM);
+        }
         List<String> lines = new ArrayList<>();
         for (String id : ids) {
             lines.add(rooms.get(id).describe());

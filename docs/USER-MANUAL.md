@@ -94,11 +94,15 @@ optional. **A file path that cannot be opened is reported as one line, and the
 program stops before asking for any command**, rather than running without the
 log that was requested.
 
-When the program starts it prints one line:
+When the program starts it prints two lines: the banner, and a reminder of the
+first thing a new session needs.
 
 ```
 Crobs - Campus Room Booking System. Type a command, or quit to exit.
+No user is logged in. Start with: login U000 (the superadmin).
 ```
+
+![The program on start-up](shots/01_start.png)
 
 The program ends when `quit` is typed, or when the input ends (for example when
 input is piped from a file). The exit status is `0` for a normal run and `1`
@@ -146,10 +150,15 @@ words `admin` and `regular`; the role of the superadmin can never be changed.
 A command that is refused because of the role prints one of:
 
 ```
-Error: Please login first.
-Error: Only an admin can do that.
+Error: Please login first. Use: login <userID>, for example login U000
+Error: Only an admin can do that. Log in as the superadmin (login U000) to manage users and rooms
 Error: Only the superadmin can do that.
 ```
+
+Each refusal names the missing step, so a newcomer does not have to guess that
+the superadmin must log in first:
+
+![Logging in first, and the hint printed before that](shots/03_login_needed.png)
 
 ---
 
@@ -257,6 +266,9 @@ Room R002 created.
 
 Errors: `Unsupported room type "lab".` · `Capacity must be a positive integer.`
 
+
+![Creating two rooms and listing them](shots/04_add_room.png)
+
 ### 7.8 `modifyRoom roomID field newValue` — superadmin or admin
 
 Change one field of a room. The field is one of `type`, `capacity`, `features`.
@@ -316,6 +328,11 @@ Errors: `Start time must be earlier than end time.` · `The purpose must not be
 empty.` · `Invalid date "2026-11-31", expected yyyy-MM-dd.` · `Invalid time
 "9:00", expected HH:mm.` · `Room R001 does not exist.`
 
+
+![A regular user books a room](shots/05_book.png)
+
+![An overlapping booking is refused; the adjacent one is accepted](shots/06_conflict.png)
+
 ### 7.11 `modifyBooking bookingID roomId date startTime endTime purpose`
 
 Replace every detail of an existing booking. All six arguments are always
@@ -368,6 +385,9 @@ is free for part of it.
 Errors: `Minimum capacity must be a non-negative integer.` · the usual date and
 time errors.
 
+
+![A search that matches, and one that does not](shots/09_search.png)
+
 ### 7.14 `schedule roomId weekStartDate` — anyone logged in
 
 Show the bookings of one room for the **seven days starting on
@@ -394,6 +414,9 @@ in that week the answer is `No booking in this week.`
 
 Errors: `Room R001 does not exist.`
 
+
+![The weekly schedule of one room](shots/07_schedule.png)
+
 ### 7.15 `listRoom roomID` — anyone logged in
 
 Show one room as one line: id, type, capacity, features.
@@ -414,6 +437,9 @@ listAllRooms
 R001 computerLab 20 wifi,projector
 R002 seminarRoom 12 -
 ```
+
+
+![An empty list now says so](shots/02_no_room.png)
 
 ### 7.17 `listBookings` — anyone logged in
 
@@ -463,6 +489,9 @@ again. At most one command can be undone per `undo`; type it again to go further
 back. Reading commands such as `listAllRooms` do not disturb the undo history.
 
 Answers: `Undone.` or `Nothing to undo.`
+
+
+![undo and redo with the snapshot history](shots/08_undo.png)
 
 ### 7.19 `redo` — anyone logged in
 
@@ -542,18 +571,19 @@ changed when a command fails.
 
 | Message | Cause | What to do |
 | --- | --- | --- |
-| `Please login first.` | a data command was typed with nobody logged in | `login U000` (or another ID) first |
+| `Please login first. Use: login <userID>, for example login U000` | a data command was typed with nobody logged in | `login U000` (or another ID) first |
 | `Unknown command "boook".` | the command word is not in the list | check the spelling in section 7 |
 | `Wrong number of arguments for "book".` | too few or too many words | compare with the syntax line of the command |
 | `Invalid date "20/11/2026", expected yyyy-MM-dd.` | wrong date format or an impossible date | write `2026-11-20`; `2026-02-30` is rejected too |
 | `Invalid time "9:00", expected HH:mm.` | wrong time format | write `09:00` |
 | `Start time must be earlier than end time.` | the end time is not after the start | swap the two times |
 | `Room R001 is already booked from 09:00 to 10:00 on 2026-11-20.` | the interval overlaps an existing booking | pick another time, or look at `schedule` first |
-| `Room R001 does not exist.` | the room ID is unknown or the room was deleted | `listAllRooms` shows the rooms that exist |
+| `Room R001 does not exist. An admin can add one with: addRoom` | the room ID is unknown or the room was deleted | `listAllRooms` shows the rooms that exist |
 | `User U009 does not exist.` | the user ID is unknown or the user was removed | `login` with an existing ID |
 | `Booking B009 does not exist.` | the booking ID is unknown | `listBookings` shows the caller's bookings |
 | `You can only change your own bookings.` | the booking belongs to somebody else | modify only your own bookings |
-| `Only an admin can do that.` / `Only the superadmin can do that.` | the role is too low for the command | ask an admin, or `login U000` |
+| `Only an admin can do that. Log in as the superadmin (login U000) to manage users and rooms` / `Only the superadmin can do that.` | the role is too low for the command | ask an admin, or `login U000` |
+| `No room yet. An admin can add one with: addRoom roomType capacity features` | `listAllRooms` was run before any room existed | not an error: create a room with `addRoom` |
 | `Only a regular user can be removed.` | `removeUser` was given an admin or `U000` | demote first with `changeRole`, then remove |
 | `The role of the superadmin cannot be changed.` | `changeRole U000 …` | the fixed superadmin stays as it is |
 | `Capacity must be a positive integer.` | zero, negative or a word was given | give a whole number greater than zero |
