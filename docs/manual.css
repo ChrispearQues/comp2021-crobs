@@ -9,4 +9,11 @@ code { font-family: "SF Mono", Menlo, monospace; font-size: 9pt; background: #f1
 table { border-collapse: collapse; width: 100%; font-size: 9.1pt; margin: 7pt 0; page-break-inside: avoid; }
 th, td { border: 1px solid #ccd3dc; padding: 4.5pt 6pt; vertical-align: top; text-align: left; }
 th { background: #edf2f8; }
-img { width: 100%; margin: 7pt 0 11pt 0; border: 1px solid #dfe3e8; border-radius: 4px; page-break-inside: avoid; }
+img { width: 100%; max-width: 100%; display: block; margin: 7pt 0 11pt 0; border: 1px solid #dfe3e8; border-radius: 4px; page-break-inside: avoid; }
+
+img, pre, figure { page-break-inside: avoid; break-inside: avoid; }
+table { page-break-inside: auto; }
+thead { display: table-header-group; }
+tbody tr { page-break-inside: avoid; break-inside: avoid; }
+h2, h3 { page-break-after: avoid; break-after: avoid; }
+tr { page-break-inside: avoid; break-inside: avoid; }
